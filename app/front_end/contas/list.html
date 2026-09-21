@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Contas{% endblock %}
+{% block content %}
+  <h2 class="mb-4">Contas cadastradas</h2>
+
+  <table class="table table-striped bg-white shadow-sm">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Login</th>
+        <th>Telefone</th>
+        <th>Status</th>
+        <th>Criada em</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in contas %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td>{{ c.nome }}</td>
+        <td>{{ c.email }}</td>
+        <td>
+          {% if c.tipo_login == 'google' %}
+            <span class="badge bg-danger">Google</span>
+          {% else %}
+            <span class="badge bg-secondary">Local</span>
+          {% endif %}
+        </td>
+        <td>{{ c.telefone or '-' }}</td>
+        <td>
+          {% if c.ativo %}
+            <span class="badge bg-success">Ativa</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">Inativa</span>
+          {% endif %}
+        </td>
+        <td>{{ c.data_criacao }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('contas.detalhe', conta_id=c.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+          <a href="{{ url_for('contas.editar', conta_id=c.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+          <form action="{{ url_for('contas.excluir', conta_id=c.id) }}" method="post" class="d-inline"
+                onsubmit="return confirm('Tem certeza que deseja excluir esta conta?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="text-center text-muted">Nenhuma conta cadastrada ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

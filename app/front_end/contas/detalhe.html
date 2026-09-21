@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Detalhes da conta{% endblock %}
+{% block content %}
+  <h2 class="mb-4">Detalhes da conta</h2>
+
+  <div class="card shadow-sm" style="max-width:480px;">
+    <div class="card-body">
+      <p><strong>Nome:</strong> {{ conta.nome }}</p>
+      <p><strong>E-mail:</strong> {{ conta.email }}</p>
+      <p><strong>Tipo de login:</strong> {{ conta.tipo_login }}</p>
+      <p><strong>Telefone:</strong> {{ conta.telefone or '-' }}</p>
+      <p><strong>Status:</strong> {{ 'Ativa' if conta.ativo else 'Inativa' }}</p>
+      <p><strong>Criada em:</strong> {{ conta.data_criacao }}</p>
+    </div>
+  </div>
+
+  <a href="{{ url_for('contas.listar') }}" class="btn btn-link mt-3">← Voltar</a>
+{% endblock %}
