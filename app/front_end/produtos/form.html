@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar produto' if produto and produto.id else 'Novo produto' }}{% endblock %}
+{% block content %}
+  <h2 class="mb-4">{{ 'Editar produto' if produto and produto.id else 'Novo produto' }}</h2>
+
+  <form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:520px;">
+    <div class="mb-3">
+      <label class="form-label">Restaurante</label>
+      <select name="restaurante_id" class="form-select" required>
+        <option value="">Selecione...</option>
+        {% for r in restaurantes %}
+          <option value="{{ r.id }}"
+            {{ 'selected' if produto and produto.restaurante_id|string == r.id|string else '' }}>
+            {{ r.nome }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Nome do produto</label>
+      <input type="text" name="nome" class="form-control"
+             value="{{ produto.nome if produto else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Descrição</label>
+      <textarea name="descricao" class="form-control" rows="2">{{ produto.descricao if produto else '' }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Categoria</label>
+      <select name="categoria" class="form-select" required>
+        <option value="">Selecione...</option>
+        {% for cat in categorias %}
+          <option value="{{ cat }}" {{ 'selected' if produto and produto.categoria == cat else '' }}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Preço (R$)</label>
+      <input type="text" name="preco" class="form-control"
+             value="{{ produto.preco if produto else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">URL da imagem</label>
+      <input type="text" name="imagem_url" class="form-control"
+             value="{{ produto.imagem_url if produto else '' }}">
+    </div>
+
+    {% if produto and produto.id %}
+    <div class="form-check mb-3">
+      <input type="checkbox" name="disponivel" class="form-check-input" id="disponivel"
+             {{ 'checked' if produto.disponivel else '' }}>
+      <label class="form-check-label" for="disponivel">Produto disponível</label>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-danger">Salvar</button>
+    <a href="{{ url_for('produtos.listar') }}" class="btn btn-link">Cancelar</a>
+  </form>
+{% endblock %}

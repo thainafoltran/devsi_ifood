@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Restaurantes{% endblock %}
+{% block content %}
+  <h2 class="mb-4">Restaurantes cadastrados</h2>
+
+  <table class="table table-striped bg-white shadow-sm">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Categoria</th>
+        <th>Cidade</th>
+        <th>Dono</th>
+        <th>Taxa entrega</th>
+        <th>Tempo entrega</th>
+        <th>Avaliação</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in restaurantes %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.nome }}</td>
+        <td>{{ r.categoria }}</td>
+        <td>{{ r.cidade }}</td>
+        <td>{{ r.dono_nome }}</td>
+        <td>R$ {{ "%.2f"|format(r.taxa_entrega) }}</td>
+        <td>{{ r.tempo_entrega_min }}-{{ r.tempo_entrega_max }} min</td>
+        <td>{{ r.avaliacao }} ⭐</td>
+        <td>
+          {% if r.ativo %}
+            <span class="badge bg-success">Ativo</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">Inativo</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a href="{{ url_for('restaurantes.detalhe', restaurante_id=r.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+          <a href="{{ url_for('restaurantes.editar', restaurante_id=r.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+          <a href="{{ url_for('produtos.listar', restaurante_id=r.id) }}" class="btn btn-sm btn-outline-dark">Cardápio</a>
+          <form action="{{ url_for('restaurantes.excluir', restaurante_id=r.id) }}" method="post" class="d-inline"
+                onsubmit="return confirm('Tem certeza que deseja excluir este restaurante? Os produtos dele também serão excluídos.');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10" class="text-center text-muted">Nenhum restaurante cadastrado ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

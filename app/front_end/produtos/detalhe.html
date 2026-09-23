@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Detalhes do produto{% endblock %}
+{% block content %}
+  <h2 class="mb-4">{{ produto.nome }}</h2>
+
+  <div class="card shadow-sm" style="max-width:480px;">
+    {% if produto.imagem_url %}
+      <img src="{{ produto.imagem_url }}" class="card-img-top" alt="{{ produto.nome }}">
+    {% endif %}
+    <div class="card-body">
+      <p><strong>Restaurante:</strong> {{ produto.restaurante_nome }}</p>
+      <p><strong>Categoria:</strong> {{ produto.categoria }}</p>
+      <p><strong>Descrição:</strong> {{ produto.descricao or '-' }}</p>
+      <p><strong>Preço:</strong> R$ {{ "%.2f"|format(produto.preco) }}</p>
+      <p><strong>Disponível:</strong> {{ 'Sim' if produto.disponivel else 'Não' }}</p>
+      <p><strong>Criado em:</strong> {{ produto.data_criacao }}</p>
+    </div>
+  </div>
+
+  <a href="{{ url_for('produtos.listar') }}" class="btn btn-link mt-3">← Voltar</a>
+{% endblock %}

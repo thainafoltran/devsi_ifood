@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Produtos{% endblock %}
+{% block content %}
+  <h2 class="mb-4">
+    {% if restaurante_id %}
+      Cardápio do restaurante
+    {% else %}
+      Todos os produtos
+    {% endif %}
+  </h2>
+
+  <form method="get" class="mb-3 d-flex gap-2" style="max-width:400px;">
+    <select name="restaurante_id" class="form-select" onchange="this.form.submit()">
+      <option value="">Todos os restaurantes</option>
+      {% for r in restaurantes %}
+        <option value="{{ r.id }}" {{ 'selected' if restaurante_id == r.id else '' }}>{{ r.nome }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <table class="table table-striped bg-white shadow-sm">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Restaurante</th>
+        <th>Categoria</th>
+        <th>Preço</th>
+        <th>Disponível</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in produtos %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.nome }}</td>
+        <td>{{ p.restaurante_nome }}</td>
+        <td>{{ p.categoria }}</td>
+        <td>R$ {{ "%.2f"|format(p.preco) }}</td>
+        <td>
+          {% if p.disponivel %}
+            <span class="badge bg-success">Sim</span>
+          {% else %}
+            <span class="badge bg-secondary">Não</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a href="{{ url_for('produtos.detalhe', produto_id=p.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+          <a href="{{ url_for('produtos.editar', produto_id=p.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+          <form action="{{ url_for('produtos.excluir', produto_id=p.id) }}" method="post" class="d-inline"
+                onsubmit="return confirm('Tem certeza que deseja excluir este produto?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted">Nenhum produto cadastrado ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
