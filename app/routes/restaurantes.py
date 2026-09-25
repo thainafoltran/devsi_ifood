@@ -1,16 +1,3 @@
-"""
-CRUD Web completo de RESTAURANTES (item 7 da entrega).
-Cada restaurante pertence a uma conta (o dono/parceiro).
-
-Rotas:
-  GET  /restaurantes                  -> lista todos os restaurantes
-  GET  /restaurantes/novo             -> formulário de criação
-  POST /restaurantes/novo             -> cria restaurante (Create)
-  GET  /restaurantes/<id>             -> visualizar detalhes (Read)
-  GET  /restaurantes/<id>/editar      -> formulário de edição
-  POST /restaurantes/<id>/editar      -> atualiza restaurante (Update)
-  POST /restaurantes/<id>/excluir     -> remove restaurante (Delete)
-"""
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.db import run_query, IntegrityError
 
@@ -25,7 +12,7 @@ def _contas_para_select():
     )
 
 
-# ---------- READ (listar) ----------
+# READ
 @restaurantes_bp.route("/")
 def listar():
     restaurantes = run_query(
@@ -40,7 +27,7 @@ def listar():
     return render_template("restaurantes/list.html", restaurantes=restaurantes)
 
 
-# ---------- CREATE ----------
+# CREATE
 @restaurantes_bp.route("/novo", methods=["GET", "POST"])
 def criar():
     if request.method == "GET":
@@ -59,7 +46,6 @@ def criar():
     tempo_min = request.form.get("tempo_entrega_min", "30").strip() or "30"
     tempo_max = request.form.get("tempo_entrega_max", "45").strip() or "45"
 
-    # ---- Regras de negócio básicas ----
     if not conta_id or not nome or not categoria or not endereco or not cidade:
         flash("Dono, nome, categoria, endereço e cidade são obrigatórios.", "danger")
         return render_template(
@@ -107,7 +93,7 @@ def criar():
         )
 
 
-# ---------- READ (detalhe) ----------
+# READ
 @restaurantes_bp.route("/<int:restaurante_id>")
 def detalhe(restaurante_id):
     restaurante = run_query(
@@ -124,7 +110,7 @@ def detalhe(restaurante_id):
     return render_template("restaurantes/detalhe.html", restaurante=restaurante)
 
 
-# ---------- UPDATE ----------
+# UPDATE
 @restaurantes_bp.route("/<int:restaurante_id>/editar", methods=["GET", "POST"])
 def editar(restaurante_id):
     restaurante = run_query(
@@ -187,7 +173,7 @@ def editar(restaurante_id):
     return redirect(url_for("restaurantes.listar"))
 
 
-# ---------- DELETE ----------
+# DELETE
 @restaurantes_bp.route("/<int:restaurante_id>/excluir", methods=["POST"])
 def excluir(restaurante_id):
     run_query("DELETE FROM restaurantes WHERE id = ?", (restaurante_id,), commit=True)
