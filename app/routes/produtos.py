@@ -1,16 +1,3 @@
-"""
-CRUD Web completo de PRODUTOS - refeições e lanches (item 8 da entrega).
-Cada produto pertence a um restaurante.
-
-Rotas:
-  GET  /produtos                  -> lista todos os produtos (com filtro opcional por restaurante)
-  GET  /produtos/novo             -> formulário de criação
-  POST /produtos/novo             -> cria produto (Create)
-  GET  /produtos/<id>             -> visualizar detalhes (Read)
-  GET  /produtos/<id>/editar      -> formulário de edição
-  POST /produtos/<id>/editar      -> atualiza produto (Update)
-  POST /produtos/<id>/excluir     -> remove produto (Delete)
-"""
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.db import run_query
 
@@ -27,7 +14,7 @@ def _restaurantes_para_select():
     )
 
 
-# ---------- READ (listar) ----------
+# READ
 @produtos_bp.route("/")
 def listar():
     restaurante_id = request.args.get("restaurante_id", type=int)
@@ -60,7 +47,7 @@ def listar():
     )
 
 
-# ---------- CREATE ----------
+# CREATE
 @produtos_bp.route("/novo", methods=["GET", "POST"])
 def criar():
     if request.method == "GET":
@@ -78,7 +65,6 @@ def criar():
     preco = request.form.get("preco", "").strip()
     imagem_url = request.form.get("imagem_url", "").strip() or None
 
-    # ---- Regras de negócio básicas ----
     if not restaurante_id or not nome or not categoria or not preco:
         flash("Restaurante, nome, categoria e preço são obrigatórios.", "danger")
         return render_template(
@@ -119,7 +105,7 @@ def criar():
     return redirect(url_for("produtos.listar"))
 
 
-# ---------- READ (detalhe) ----------
+# READ
 @produtos_bp.route("/<int:produto_id>")
 def detalhe(produto_id):
     produto = run_query(
@@ -136,7 +122,7 @@ def detalhe(produto_id):
     return render_template("produtos/detalhe.html", produto=produto)
 
 
-# ---------- UPDATE ----------
+# UPDATE
 @produtos_bp.route("/<int:produto_id>/editar", methods=["GET", "POST"])
 def editar(produto_id):
     produto = run_query(
@@ -198,7 +184,7 @@ def editar(produto_id):
     return redirect(url_for("produtos.listar"))
 
 
-# ---------- DELETE ----------
+# DELETE
 @produtos_bp.route("/<int:produto_id>/excluir", methods=["POST"])
 def excluir(produto_id):
     run_query("DELETE FROM produtos WHERE id = ?", (produto_id,), commit=True)
