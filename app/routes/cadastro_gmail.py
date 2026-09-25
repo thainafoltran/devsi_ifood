@@ -1,14 +1,3 @@
-"""
-Inserção de nova conta via Google/Gmail (item 6 da entrega).
-
-Fluxo:
-  1. Usuário clica em "Entrar com Google" -> /auth/google/login
-  2. É redirecionado para a tela de consentimento do Google
-  3. Google chama de volta /auth/google/callback com um código
-  4. Trocamos o código por dados do usuário (nome, email, sub/id)
-  5. Se já existe conta com esse email -> apenas loga
-     Se não existe -> cria uma nova conta (tipo_login='google', sem senha)
-"""
 import os
 from flask import Blueprint, redirect, url_for, session, flash
 from authlib.integrations.flask_client import OAuth
@@ -49,7 +38,7 @@ def callback():
     nome = userinfo.get("name") or email.split("@")[0]
     foto_url = userinfo.get("picture")
 
-    # 1) já existe conta com esse google_id ou esse email?
+    #verifica se ja tem conta
     conta = run_query(
         """SELECT * FROM contas
            WHERE (tipo_login='google' AND provider_id=?) OR email=?
@@ -62,7 +51,7 @@ def callback():
         conta_id = conta["id"]
         flash(f"Bem-vindo de volta, {conta['nome']}!", "success")
     else:
-        # 2) cria nova conta -- sem senha, pois a autenticação é feita pelo Google
+        # conta sem senha
         try:
             conta_id = run_query(
                 """INSERT INTO contas (nome, email, senha_hash, tipo_login,
