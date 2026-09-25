@@ -12,7 +12,7 @@ Rotas:
   POST /produtos/<id>/excluir     -> remove produto (Delete)
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.db import run_query, IntegrityError
+from app.db import run_query
 
 produtos_bp = Blueprint("produtos", __name__, url_prefix="/produtos")
 
@@ -37,7 +37,7 @@ def listar():
             """SELECT p.*, r.nome AS restaurante_nome
                FROM produtos p
                JOIN restaurantes r ON r.id = p.restaurante_id
-               WHERE p.restaurante_id = %s
+               WHERE p.restaurante_id = ?
                ORDER BY p.id DESC""",
             (restaurante_id,),
             fetch=True,
@@ -111,7 +111,7 @@ def criar():
 
     run_query(
         """INSERT INTO produtos (restaurante_id, nome, descricao, categoria, preco, imagem_url)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?, ?)""",
         (restaurante_id, nome, descricao, categoria, preco_val, imagem_url),
         commit=True,
     )
@@ -126,7 +126,7 @@ def detalhe(produto_id):
         """SELECT p.*, r.nome AS restaurante_nome
            FROM produtos p
            JOIN restaurantes r ON r.id = p.restaurante_id
-           WHERE p.id = %s""",
+           WHERE p.id = ?""",
         (produto_id,),
         fetchone=True,
     )
@@ -140,7 +140,7 @@ def detalhe(produto_id):
 @produtos_bp.route("/<int:produto_id>/editar", methods=["GET", "POST"])
 def editar(produto_id):
     produto = run_query(
-        "SELECT * FROM produtos WHERE id = %s", (produto_id,), fetchone=True
+        "SELECT * FROM produtos WHERE id = ?", (produto_id,), fetchone=True
     )
     if not produto:
         flash("Produto não encontrado.", "warning")
@@ -187,9 +187,9 @@ def editar(produto_id):
 
     run_query(
         """UPDATE produtos SET
-               restaurante_id=%s, nome=%s, descricao=%s, categoria=%s,
-               preco=%s, imagem_url=%s, disponivel=%s
-           WHERE id=%s""",
+               restaurante_id=?, nome=?, descricao=?, categoria=?,
+               preco=?, imagem_url=?, disponivel=?
+           WHERE id=?""",
         (restaurante_id, nome, descricao, categoria, preco_val,
          imagem_url, disponivel, produto_id),
         commit=True,
@@ -201,6 +201,6 @@ def editar(produto_id):
 # ---------- DELETE ----------
 @produtos_bp.route("/<int:produto_id>/excluir", methods=["POST"])
 def excluir(produto_id):
-    run_query("DELETE FROM produtos WHERE id = %s", (produto_id,), commit=True)
+    run_query("DELETE FROM produtos WHERE id = ?", (produto_id,), commit=True)
     flash("Produto excluído com sucesso!", "success")
     return redirect(url_for("produtos.listar"))

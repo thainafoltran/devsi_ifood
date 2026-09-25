@@ -93,7 +93,7 @@ def criar():
             """INSERT INTO restaurantes
                (conta_id, nome, categoria, descricao, endereco, cidade,
                 telefone, taxa_entrega, tempo_entrega_min, tempo_entrega_max)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (conta_id, nome, categoria, descricao, endereco, cidade,
              telefone, taxa_entrega_val, tempo_min_val, tempo_max_val),
             commit=True,
@@ -114,7 +114,7 @@ def detalhe(restaurante_id):
         """SELECT r.*, c.nome AS dono_nome, c.email AS dono_email
            FROM restaurantes r
            JOIN contas c ON c.id = r.conta_id
-           WHERE r.id = %s""",
+           WHERE r.id = ?""",
         (restaurante_id,),
         fetchone=True,
     )
@@ -128,7 +128,7 @@ def detalhe(restaurante_id):
 @restaurantes_bp.route("/<int:restaurante_id>/editar", methods=["GET", "POST"])
 def editar(restaurante_id):
     restaurante = run_query(
-        "SELECT * FROM restaurantes WHERE id = %s", (restaurante_id,), fetchone=True
+        "SELECT * FROM restaurantes WHERE id = ?", (restaurante_id,), fetchone=True
     )
     if not restaurante:
         flash("Restaurante não encontrado.", "warning")
@@ -175,10 +175,10 @@ def editar(restaurante_id):
 
     run_query(
         """UPDATE restaurantes SET
-               conta_id=%s, nome=%s, categoria=%s, descricao=%s, endereco=%s,
-               cidade=%s, telefone=%s, taxa_entrega=%s, tempo_entrega_min=%s,
-               tempo_entrega_max=%s, ativo=%s
-           WHERE id=%s""",
+               conta_id=?, nome=?, categoria=?, descricao=?, endereco=?,
+               cidade=?, telefone=?, taxa_entrega=?, tempo_entrega_min=?,
+               tempo_entrega_max=?, ativo=?
+           WHERE id=?""",
         (conta_id, nome, categoria, descricao, endereco, cidade, telefone,
          taxa_entrega_val, tempo_min_val, tempo_max_val, ativo, restaurante_id),
         commit=True,
@@ -190,6 +190,6 @@ def editar(restaurante_id):
 # ---------- DELETE ----------
 @restaurantes_bp.route("/<int:restaurante_id>/excluir", methods=["POST"])
 def excluir(restaurante_id):
-    run_query("DELETE FROM restaurantes WHERE id = %s", (restaurante_id,), commit=True)
+    run_query("DELETE FROM restaurantes WHERE id = ?", (restaurante_id,), commit=True)
     flash("Restaurante excluído com sucesso!", "success")
     return redirect(url_for("restaurantes.listar"))

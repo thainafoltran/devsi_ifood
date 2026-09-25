@@ -11,8 +11,7 @@ Rotas:
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
-from mysql.connector import IntegrityError
-from app.db import run_query
+from app.db import run_query, IntegrityError
 
 contas_bp = Blueprint("contas", __name__, url_prefix="/contas")
 
@@ -53,7 +52,7 @@ def criar():
     try:
         run_query(
             """INSERT INTO contas (nome, email, senha_hash, tipo_login, telefone)
-               VALUES (%s, %s, %s, 'local', %s)""",
+               VALUES (?, ?, ?, 'local', ?)""",
             (nome, email, senha_hash, telefone),
             commit=True,
         )
@@ -68,7 +67,7 @@ def criar():
 @contas_bp.route("/<int:conta_id>")
 def detalhe(conta_id):
     conta = run_query(
-        "SELECT * FROM contas WHERE id = %s", (conta_id,), fetchone=True
+        "SELECT * FROM contas WHERE id = ?", (conta_id,), fetchone=True
     )
     if not conta:
         flash("Conta não encontrada.", "warning")
@@ -80,7 +79,7 @@ def detalhe(conta_id):
 @contas_bp.route("/<int:conta_id>/editar", methods=["GET", "POST"])
 def editar(conta_id):
     conta = run_query(
-        "SELECT * FROM contas WHERE id = %s", (conta_id,), fetchone=True
+        "SELECT * FROM contas WHERE id = ?", (conta_id,), fetchone=True
     )
     if not conta:
         flash("Conta não encontrada.", "warning")
@@ -106,15 +105,15 @@ def editar(conta_id):
                 return render_template("contas/form.html", conta=request.form)
             senha_hash = generate_password_hash(nova_senha)
             run_query(
-                """UPDATE contas SET nome=%s, email=%s, telefone=%s,
-                   senha_hash=%s, ativo=%s WHERE id=%s""",
+                """UPDATE contas SET nome=?, email=?, telefone=?,
+                   senha_hash=?, ativo=? WHERE id=?""",
                 (nome, email, telefone, senha_hash, ativo, conta_id),
                 commit=True,
             )
         else:
             run_query(
-                """UPDATE contas SET nome=%s, email=%s, telefone=%s,
-                   ativo=%s WHERE id=%s""",
+                """UPDATE contas SET nome=?, email=?, telefone=?,
+                   ativo=? WHERE id=?""",
                 (nome, email, telefone, ativo, conta_id),
                 commit=True,
             )
@@ -128,6 +127,6 @@ def editar(conta_id):
 # ---------- DELETE ----------
 @contas_bp.route("/<int:conta_id>/excluir", methods=["POST"])
 def excluir(conta_id):
-    run_query("DELETE FROM contas WHERE id = %s", (conta_id,), commit=True)
+    run_query("DELETE FROM contas WHERE id = ?", (conta_id,), commit=True)
     flash("Conta excluída com sucesso!", "success")
     return redirect(url_for("contas.listar"))
