@@ -12,7 +12,7 @@ Rotas:
   POST /produtos/<id>/excluir     -> remove produto (Delete)
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.db import run_query
+from app.db import run_query, IntegrityError
 
 produtos_bp = Blueprint("produtos", __name__, url_prefix="/produtos")
 

@@ -12,8 +12,7 @@ Rotas:
   POST /restaurantes/<id>/excluir     -> remove restaurante (Delete)
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from mysql.connector import IntegrityError
-from app.db import run_query
+from app.db import run_query, IntegrityError
 
 restaurantes_bp = Blueprint("restaurantes", __name__, url_prefix="/restaurantes")
 
