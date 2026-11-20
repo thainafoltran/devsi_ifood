@@ -39,7 +39,7 @@ def ver():
         return render_template("cesta/cesta.html", cesta=None, itens=[], total=0)
 
     itens = run_query(
-        """SELECT ci.id, ci.quantidade, p.id AS produto_id, p.nome, p.preco, p.imagem
+        """SELECT ci.id, ci.quantidade, p.id AS produto_id, p.nome, p.preco, p.imagem_url AS imagem
            FROM cesta_itens ci
            JOIN produtos p ON p.id = ci.produto_id
            WHERE ci.cesta_id = ?""",
