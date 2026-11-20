@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Delivery{% endblock %}</title>
+<style>
+:root{--c:#ea1d2c;--bg:#f7f7f7;--tx:#3e3e3e;--mut:#717171;--bd:#e6e6e6}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+nav{background:#fff;border-bottom:1px solid var(--bd);padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;position:sticky;top:0}
+nav a{color:var(--tx);text-decoration:none;font-weight:500}nav a:hover{color:var(--c)}nav .brand{color:var(--c);font-weight:800;font-size:1.2rem}
+nav .sp{flex:1}main{max-width:1000px;margin:1.2rem auto;padding:0 1rem}
+.card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.8rem}
+.btn{background:var(--c);color:#fff;border:0;border-radius:8px;padding:.5rem .9rem;cursor:pointer;font-size:.95rem;text-decoration:none;display:inline-block}
+.btn.sec{background:#fff;color:var(--tx);border:1px solid var(--bd)}.btn.sm{padding:.25rem .6rem;font-size:.85rem}
+input,select,textarea{padding:.5rem;border:1px solid #ccc;border-radius:6px;font-size:.95rem;max-width:100%}
+label{display:block;margin:.6rem 0 .2rem;font-weight:600;font-size:.9rem}
+.flash{padding:.7rem 1rem;border-radius:8px;margin-bottom:.6rem}.flash.success{background:#e6f6ea}.flash.danger{background:#fde8e8}
+.flash.warning{background:#fff4d6}.flash.info{background:#e7f1fb}
+.mut{color:var(--mut);font-size:.9rem}.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse}td,th{padding:.45rem;border-bottom:1px solid var(--bd);text-align:left}
+.tag{background:#eee;border-radius:20px;padding:.1rem .6rem;font-size:.8rem}.price{font-weight:700}
+.steps{list-style:none;padding:0}.steps li{padding:.5rem .8rem;border-left:4px solid #ddd;margin-bottom:.3rem;color:var(--mut)}
+.steps li.ok{border-color:#2e9e4f;color:var(--tx)}.steps li.now{border-color:var(--c);color:var(--c);font-weight:700}
+.codigo{font-size:1.8rem;letter-spacing:.6rem;text-align:center;width:14rem}
+</style></head>
+<body>
+<nav>
+  <a class="brand" href="{{ url_for('index') }}">🍽 Delivery</a>
+  <a href="{{ url_for('explorar.restaurantes') }}">Restaurantes</a>
+  <a href="{{ url_for('explorar.produtos') }}">Produtos</a>
+  {% if usuario %}
+    <a href="{{ url_for('explorar.restaurantes', favoritos=1) }}">Favoritos</a>
+    <a href="{{ url_for('pedidos.listar') }}">Pedidos</a>
+    <a href="{{ url_for('enderecos.listar') }}">Meus locais</a>
+    <a href="{{ url_for('restaurantes.listar') }}">Restaurantes (CRUD)</a>
+    <a href="{{ url_for('pedidos.painel') }}">Painel do restaurante</a>
+  {% endif %}
+  <span class="sp"></span>
+  <a href="{{ url_for('cesta.ver') }}">🧺 Cesta ({{ cesta_qtd }})</a>
+  {% if usuario %}<span class="mut">{{ usuario.nome }}</span><a href="{{ url_for('auth_codigo.sair') }}">Sair</a>
+  {% else %}<a href="{{ url_for('auth_codigo.entrar') }}">Entrar</a>{% endif %}
+</nav>
+<main>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+{% block conteudo %}{% endblock %}
+</main>
+</body></html>
