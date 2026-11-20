@@ -1,0 +1,23 @@
+{% extends "base2.html" %}{% block titulo %}Cesta{% endblock %}
+{% block conteudo %}
+<h2>Minha cesta</h2>
+{% if not itens %}<p class="mut">Sua cesta está vazia. <a href="{{ url_for('explorar.restaurantes') }}">Ver restaurantes</a></p>
+{% else %}
+<p>Pedido em <b><a href="{{ url_for('explorar.cardapio', restaurante_id=cesta.restaurante_id) }}">{{ cesta.restaurante_nome }}</a></b></p>
+<div class="card"><table>
+<tr><th>Item</th><th>Preço</th><th>Qtd</th><th>Total</th><th></th></tr>
+{% for i in itens %}<tr>
+  <td>{{ i.nome }}{% if i.observacao %}<br><span class="mut">{{ i.observacao }}</span>{% endif %}{% if not i.disponivel %} <span class="tag">indisponível</span>{% endif %}</td>
+  <td>{{ i.preco|brl }}</td>
+  <td><form method="post" action="{{ url_for('cesta.atualizar', item_id=i.id) }}" class="row">
+    <input type="number" name="quantidade" value="{{ i.quantidade }}" min="0" max="20" style="width:4rem"><button class="btn sec sm">Atualizar</button></form></td>
+  <td>{{ i.total_item|brl }}</td>
+  <td><form method="post" action="{{ url_for('cesta.remover', item_id=i.id) }}"><button class="btn sm">Remover</button></form></td>
+</tr>{% endfor %}
+<tr><td colspan="3" align="right"><b>Subtotal</b></td><td colspan="2" class="price">{{ subtotal|brl }}</td></tr></table></div>
+<div class="row">
+  <a class="btn" href="{{ url_for('cesta.fechar') }}">Fechar pedido</a>
+  <form method="post" action="{{ url_for('cesta.limpar') }}"><button class="btn sec">Esvaziar cesta</button></form>
+</div>
+{% endif %}
+{% endblock %}

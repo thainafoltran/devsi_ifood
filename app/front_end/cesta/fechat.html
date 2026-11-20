@@ -1,0 +1,55 @@
+{% extends "base2.html" %}
+{% block titulo %}Fechar pedido{% endblock %}
+{% block conteudo %}
+<h2>Fechar pedido — {{ cesta.restaurante_nome }}</h2>
+<div class="card"><h3>1. Entrega</h3>
+<form method="get" class="row">
+  <label style="margin:0"><input type="radio" name="tipo_entrega" value="entrega" {{ 'checked' if tipo=='entrega' }} onchange="this.form.submit()"> Entrega</label>
+  <label style="margin:0"><input type="radio" name="tipo_entrega" value="retirada" {{ 'checked' if tipo=='retirada' }} onchange="this.form.submit()"> Retirar no local</label>
+  {% if tipo=='entrega' %}
+    {% if enderecos %}<select name="endereco_id" onchange="this.form.submit()">
+      {% for e in enderecos %}<option value="{{ e.id }}" {{ 'selected' if e.id==endereco_id }}>{{ e.apelido }} — {{ e.logradouro }}, {{ e.numero }}</option>{% endfor %}</select>
+    {% else %}<a class="btn sec sm" href="{{ url_for('enderecos.criar') }}">Cadastrar endereço</a>{% endif %}
+  {% endif %}
+  <noscript><button class="btn sm">Recalcular</button></noscript>
+</form>
+{% if erro_frete %}<p style="color:#b00020">{{ erro_frete }}</p>{% endif %}
+</div>
+
+<div class="card"><h3>Resumo</h3>
+<table>{% for i in itens %}<tr><td>{{ i.quantidade }}× {{ i.nome }}</td><td align="right">{{ i.total_item|brl }}</td></tr>{% endfor %}
+<tr><td>Subtotal</td><td align="right">{{ subtotal|brl }}</td></tr>
+<tr><td>Frete {% if dist is not none %}<span class="mut">({{ dist }} km)</span>{% endif %}</td><td align="right">{{ frete|brl }}</td></tr>
+<tr><td><b>Total</b></td><td align="right" class="price">{{ total|brl }}</td></tr></table></div>
+
+<form method="post" class="card" autocomplete="off">
+<h3>2. Pagamento</h3>
+<input type="hidden" name="tipo_entrega" value="{{ tipo }}"><input type="hidden" name="endereco_id" value="{{ endereco_id or '' }}">
+
+{% for k, v in formas.items() %}
+  <label style="font-weight:400">
+    <input type="radio" name="forma_pagamento" value="{{ k }}" {{ 'checked' if forma==k or (not forma and loop.first) }} onchange="mostra()"> {{ v }}
+  </label>
+{% endfor %}
+
+<div id="cartao" style="display:none; margin-top: 15px;">
+  <label>Número do cartão</label><input name="cartao_numero" inputmode="numeric" maxlength="23" placeholder="0000 0000 0000 0000">
+  <label>Nome no cartão</label><input name="cartao_nome">
+  <div class="row">
+    <div><label>Validade (MM/AA)</label><input name="cartao_validade" maxlength="5" size="6" placeholder="MM/AA"></div>
+    <div><label>CVV</label><input name="cartao_cvv" maxlength="4" size="5" inputmode="numeric"></div>
+  </div>
+</div>
+
+<p><button class="btn" {{ 'disabled' if erro_frete }}>Finalizar pedido — {{ total|brl }}</button> <a class="btn sec" href="{{ url_for('cesta.ver') }}">Voltar</a></p>
+</form>
+
+<script>
+function mostra(){
+  const f = document.querySelector('[name=forma_pagamento]:checked').value;
+  // Mostra os campos de cartão de crédito apenas se a opção selecionada for o pagamento online pelo app
+  document.getElementById('cartao').style.display = (f === 'cartao_online') ? 'block' : 'none';
+}
+mostra();
+</script>
+{% endblock %}
