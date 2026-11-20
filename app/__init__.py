@@ -20,7 +20,7 @@ def create_app():
     from app.routes.contas import contas_bp
     from app.routes.cadastro_gmail import auth_google_bp, init_oauth
     #from app.routes.cadastro_facebook import auth_facebook_bp, init_oauth_facebook
-    from app.routes.auth_codigo import auth_codigo_bp
+    #from app.routes.auth_codigo import auth_codigo_bp
     from app.routes.restaurantes import restaurantes_bp
     from app.routes.produtos import produtos_bp
     from app.routes.enderecos import enderecos_bp
@@ -29,7 +29,7 @@ def create_app():
     from app.routes.pedidos import pedidos_bp
 
     for bp in (contas_bp, auth_google_bp, #auth_facebook_bp, 
-               auth_codigo_bp,
+               #auth_codigo_bp,
                restaurantes_bp, produtos_bp, enderecos_bp, explorar_bp,
                cesta_bp, pedidos_bp):
         app.register_blueprint(bp)
