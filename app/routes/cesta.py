@@ -1,72 +1,122 @@
-import os
-import sqlite3
-from contextlib import contextmanager
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from app.db import run_query
+from app.auth_utils import login_required, usuario_atual
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "banco_dados", "ifood_clone.db")
-
-IntegrityError = sqlite3.IntegrityError
+cesta_bp = Blueprint("cesta", __name__, url_prefix="/cesta")
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def _row_to_dict(row):
-    return dict(row) if row is not None else None
-
-
-def run_query(query, params=None, fetch=False, fetchone=False, commit=False):
-    conn = get_connection()
-    cursor = conn.cursor()
+def quantidade_na_cesta(conta_id):
+    if not conta_id:
+        return 0
     try:
-        cursor.execute(query, params or ())
-        result = None
-        if fetch:
-            result = [dict(r) for r in cursor.fetchall()]
-        elif fetchone:
-            result = _row_to_dict(cursor.fetchone())
-        if commit:
-            conn.commit()
-            result = cursor.lastrowid
-        return result
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@contextmanager
-def transaction():
-    """Várias operações atômicas: tudo é gravado ou nada é gravado."""
-    conn = get_connection()
-    try:
-        yield conn
-        conn.commit()
+        res = run_query(
+            """SELECT COALESCE(SUM(ci.quantidade), 0) AS total
+               FROM cesta_itens ci
+               JOIN cestas c ON c.id = ci.cesta_id
+               WHERE c.conta_id = ?""",
+            (conta_id,),
+            fetchone=True,
+        )
+        return res["total"] if res else 0
     except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+        return 0
 
 
-def _migrar(conn):
-    """Bancos da 1ª entrega: adiciona colunas novas sem perder dados."""
-    cols = {r["name"] for r in conn.execute("PRAGMA table_info(restaurantes)")}
-    for c in ("latitude", "longitude"):
-        if c not in cols:
-            conn.execute(f"ALTER TABLE restaurantes ADD COLUMN {c} REAL")
+@cesta_bp.route("/")
+@login_required
+def ver_cesta():
+    u = usuario_atual()
+    cesta = run_query(
+        """SELECT c.id, c.restaurante_id, r.nome AS restaurante_nome
+           FROM cestas c
+           JOIN restaurantes r ON r.id = c.restaurante_id
+           WHERE c.conta_id = ?
+           ORDER BY c.id DESC LIMIT 1""",
+        (u["id"],),
+        fetchone=True,
+    )
+    if not cesta:
+        return render_template("cesta/cesta.html", cesta=None, itens=[], total=0)
+
+    itens = run_query(
+        """SELECT ci.id, ci.quantidade, p.id AS produto_id, p.nome, p.preco, p.imagem
+           FROM cesta_itens ci
+           JOIN produtos p ON p.id = ci.produto_id
+           WHERE ci.cesta_id = ?""",
+        (cesta["id"],),
+        fetch=True,
+    )
+    total = sum((item["preco"] * item["quantidade"]) for item in itens)
+    return render_template("cesta/cesta.html", cesta=cesta, itens=itens, total=total)
 
 
-def init_db():
-    schema_path = os.path.join(BASE_DIR, "banco_dados", "schema_sqlite.sql")
-    conn = get_connection()
-    try:
-        with open(schema_path, "r", encoding="utf-8") as f:
-            conn.executescript(f.read())
-        _migrar(conn)
-        conn.commit()
-    finally:
-        conn.close()
+@cesta_bp.route("/adicionar/<int:produto_id>", methods=["POST"])
+@login_required
+def adicionar(produto_id):
+    u = usuario_atual()
+    qtd = max(1, int(request.form.get("quantidade", 1)))
+
+    produto = run_query(
+        "SELECT id, restaurante_id FROM produtos WHERE id = ?",
+        (produto_id,),
+        fetchone=True,
+    )
+    if not produto:
+        flash("Produto não encontrado.", "danger")
+        return redirect(request.referrer or url_for("explorar.restaurantes"))
+
+    cesta = run_query(
+        "SELECT id, restaurante_id FROM cestas WHERE conta_id = ?",
+        (u["id"],),
+        fetchone=True,
+    )
+
+    # Se já existe cesta de outro restaurante, limpa para iniciar nova
+    if cesta and cesta["restaurante_id"] != produto["restaurante_id"]:
+        run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
+        run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
+        cesta = None
+
+    if not cesta:
+        cesta_id = run_query(
+            "INSERT INTO cestas (conta_id, restaurante_id) VALUES (?, ?)",
+            (u["id"], produto["restaurante_id"]),
+            commit=True,
+        )
+    else:
+        cesta_id = cesta["id"]
+
+    existente = run_query(
+        "SELECT id, quantidade FROM cesta_itens WHERE cesta_id = ? AND produto_id = ?",
+        (cesta_id, produto_id),
+        fetchone=True,
+    )
+    if existente:
+        run_query(
+            "UPDATE cesta_itens SET quantidade = ? WHERE id = ?",
+            (existente["quantidade"] + qtd, existente["id"]),
+            commit=True,
+        )
+    else:
+        run_query(
+            "INSERT INTO cesta_itens (cesta_id, produto_id, quantidade) VALUES (?, ?, ?)",
+            (cesta_id, produto_id, qtd),
+            commit=True,
+        )
+
+    flash("Item adicionado à cesta!", "success")
+    return redirect(request.referrer or url_for("cesta.ver_cesta"))
+
+
+@cesta_bp.route("/remover/<int:item_id>", methods=["POST"])
+@login_required
+def remover(item_id):
+    u = usuario_atual()
+    run_query(
+        """DELETE FROM cesta_itens
+           WHERE id = ? AND cesta_id IN (SELECT id FROM cestas WHERE conta_id = ?)""",
+        (item_id, u["id"]),
+        commit=True,
+    )
+    flash("Item removido da cesta.", "info")
+    return redirect(url_for("cesta.ver_cesta"))
