@@ -1,0 +1,29 @@
+{% extends "base2.html" %}{% block titulo %}Endereço{% endblock %}
+{% block conteudo %}
+{% set e = e or {} %}
+<div class="card" style="max-width:560px">
+<h2>{{ 'Editar' if e.id else 'Novo' }} endereço</h2>
+<form method="post">
+  <label>Apelido (ex.: Casa, Trabalho)</label><input name="apelido" maxlength="30" required value="{{ e.apelido or '' }}">
+  <label>CEP</label><input id="cep" name="cep" maxlength="9" required value="{{ e.cep or '' }}">
+  <label>Logradouro</label><input id="logradouro" name="logradouro" required style="width:100%" value="{{ e.logradouro or '' }}">
+  <div class="row"><div><label>Número</label><input name="numero" maxlength="10" required value="{{ e.numero or '' }}" size="8"></div>
+  <div style="flex:1"><label>Complemento</label><input name="complemento" maxlength="80" style="width:100%" value="{{ e.complemento or '' }}"></div></div>
+  <label>Bairro</label><input id="bairro" name="bairro" required value="{{ e.bairro or '' }}">
+  <div class="row"><div><label>Cidade</label><input id="cidade" name="cidade" required value="{{ e.cidade or '' }}"></div>
+  <div><label>UF</label><input id="uf" name="uf" maxlength="2" size="3" required value="{{ e.uf or '' }}"></div></div>
+  <div class="row"><div><label>Latitude (opcional)</label><input id="lat" name="latitude" value="{{ e.latitude if e.latitude is not none else '' }}"></div>
+  <div><label>Longitude (opcional)</label><input id="lng" name="longitude" value="{{ e.longitude if e.longitude is not none else '' }}"></div></div>
+  <p><button type="button" class="btn sec sm" onclick="gps()">Usar minha localização atual</button></p>
+  <label><input type="checkbox" name="principal" {{ 'checked' if e.principal }}> Endereço principal</label>
+  <p><button class="btn" type="submit">Salvar</button> <a class="btn sec" href="{{ url_for('enderecos.listar') }}">Cancelar</a></p>
+</form></div>
+<script>
+document.getElementById('cep').addEventListener('blur', async function(){
+  const c=this.value.replace(/\D/g,''); if(c.length!==8) return;
+  try{const r=await fetch('https://viacep.com.br/ws/'+c+'/json/'); const d=await r.json(); if(d.erro) return;
+  logradouro.value=d.logradouro||logradouro.value; bairro.value=d.bairro||bairro.value; cidade.value=d.localidade||cidade.value; uf.value=d.uf||uf.value;}catch(e){}
+});
+function gps(){navigator.geolocation.getCurrentPosition(p=>{lat.value=p.coords.latitude.toFixed(6);lng.value=p.coords.longitude.toFixed(6)},()=>alert('Não foi possível obter a localização.'))}
+</script>
+{% endblock %}

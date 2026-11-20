@@ -1,0 +1,15 @@
+{% extends "base2.html" %}{% block titulo %}Meus locais{% endblock %}
+{% block conteudo %}
+<div class="row"><h2 style="flex:1">Meus locais</h2><a class="btn" href="{{ url_for('enderecos.criar') }}">+ Novo endereço</a></div>
+{% for e in enderecos %}
+<div class="card row">
+  <div style="flex:1"><b>{{ e.apelido }}</b> {% if e.principal %}<span class="tag">principal</span>{% endif %}<br>
+  {{ e.logradouro }}, {{ e.numero }}{% if e.complemento %} - {{ e.complemento }}{% endif %} - {{ e.bairro }}<br>
+  {{ e.cidade }}/{{ e.uf }} - CEP {{ e.cep }}
+  {% if e.latitude is not none %}<br><span class="mut">({{ e.latitude }}, {{ e.longitude }})</span>{% endif %}</div>
+  {% if not e.principal %}<form method="post" action="{{ url_for('enderecos.tornar_principal', endereco_id=e.id) }}"><button class="btn sec sm">Tornar principal</button></form>{% endif %}
+  <a class="btn sec sm" href="{{ url_for('enderecos.editar', endereco_id=e.id) }}">Editar</a>
+  <form method="post" action="{{ url_for('enderecos.excluir', endereco_id=e.id) }}" onsubmit="return confirm('Excluir este endereço?')"><button class="btn sm">Excluir</button></form>
+</div>
+{% else %}<p class="mut">Nenhum endereço cadastrado.</p>{% endfor %}
+{% endblock %}
