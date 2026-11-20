@@ -1,5 +1,5 @@
 -- ============================================================
--- Ifood Clone - Script de criação das tabelas (SQLite)
+-- APP entregas - Script de criação das tabelas (SQLite)
 -- Entrega 1: Autenticação (contas), Restaurantes e Produtos
 -- ============================================================
 
