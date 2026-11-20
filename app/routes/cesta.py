@@ -24,7 +24,7 @@ def quantidade_na_cesta(conta_id):
 
 @cesta_bp.route("/")
 @login_required
-def ver_cesta():
+def ver():
     u = usuario_atual()
     cesta = run_query(
         """SELECT c.id, c.restaurante_id, r.nome AS restaurante_nome
@@ -105,7 +105,7 @@ def adicionar(produto_id):
         )
 
     flash("Item adicionado à cesta!", "success")
-    return redirect(request.referrer or url_for("cesta.ver_cesta"))
+    return redirect(request.referrer or url_for("cesta.ver"))
 
 
 @cesta_bp.route("/remover/<int:item_id>", methods=["POST"])
@@ -119,4 +119,4 @@ def remover(item_id):
         commit=True,
     )
     flash("Item removido da cesta.", "info")
-    return redirect(url_for("cesta.ver_cesta"))
+    return redirect(url_for("cesta.ver"))
