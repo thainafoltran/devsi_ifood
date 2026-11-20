@@ -169,9 +169,17 @@ CREATE TABLE IF NOT EXISTS pedido_status_historico (
     criado_em   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ---------- NOTAS FISCAIS ----------
 
-
-
+CREATE TABLE IF NOT EXISTS notas_fiscais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id INTEGER NOT NULL UNIQUE,
+    numero_nf TEXT NOT NULL UNIQUE,
+    chave_acesso TEXT NOT NULL,
+    valor_total REAL NOT NULL,
+    emitida_em TEXT NOT NULL,
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+);
 
 
 -- ENTREGA 1 
