@@ -27,11 +27,13 @@ def create_app():
     from app.routes.explorar import explorar_bp
     from app.routes.cesta import cesta_bp
     from app.routes.pedidos import pedidos_bp
+    from app.routes.notas_fiscais import nf_bp
+    from app.routes.api_restaurantes import api_restaurantes_bp
 
     for bp in (contas_bp, auth_google_bp, #auth_facebook_bp, 
                auth_codigo_bp,
                restaurantes_bp, produtos_bp, enderecos_bp, explorar_bp,
-               cesta_bp, pedidos_bp):
+               cesta_bp, pedidos_bp, nf_bp, api_restaurantes_bp):
         app.register_blueprint(bp)
     init_oauth(app)
     #init_oauth_facebook()
