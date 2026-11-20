@@ -1,18 +1,17 @@
 import os
 import sqlite3
-
+from contextlib import contextmanager
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "banco_dados", "ifood_clone.db")
-
 
 IntegrityError = sqlite3.IntegrityError
 
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON") 
-    conn.row_factory = sqlite3.Row  
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -25,30 +24,49 @@ def run_query(query, params=None, fetch=False, fetchone=False, commit=False):
     cursor = conn.cursor()
     try:
         cursor.execute(query, params or ())
-
         result = None
         if fetch:
             result = [dict(r) for r in cursor.fetchall()]
         elif fetchone:
             result = _row_to_dict(cursor.fetchone())
-
         if commit:
             conn.commit()
             result = cursor.lastrowid
-
         return result
     finally:
         cursor.close()
         conn.close()
 
 
-def init_db():
+@contextmanager
+def transaction():
+    """Várias operações atômicas: tudo é gravado ou nada é gravado."""
+    conn = get_connection()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
+
+def _migrar(conn):
+    """Bancos da 1ª entrega: adiciona colunas novas sem perder dados."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(restaurantes)")}
+    for c in ("latitude", "longitude"):
+        if c not in cols:
+            conn.execute(f"ALTER TABLE restaurantes ADD COLUMN {c} REAL")
+
+
+def init_db():
     schema_path = os.path.join(BASE_DIR, "banco_dados", "schema_sqlite.sql")
     conn = get_connection()
     try:
         with open(schema_path, "r", encoding="utf-8") as f:
             conn.executescript(f.read())
+        _migrar(conn)
         conn.commit()
     finally:
         conn.close()
