@@ -1,0 +1,49 @@
+{% extends "base2.html" %}
+{% block titulo %}Nota Fiscal #{{ nf.numero_nf }}{% endblock %}
+
+{% block conteudo %}
+<div style="max-width: 720px; margin: 24px auto; background: #fff; padding: 28px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace;">
+  <div style="display: flex; justify-content: space-between; border-bottom: 2px dashed #ccc; padding-bottom: 12px;">
+    <div>
+      <h2 style="margin: 0;">DANFE NFC-e - Nota Fiscal</h2>
+      <p style="margin: 4px 0;"><strong>Nº NF:</strong> {{ nf.numero_nf }} | <strong>Pedido:</strong> #{{ pedido.id }}</p>
+      <p style="margin: 4px 0;"><strong>Emissão:</strong> {{ nf.emitida_em }}</p>
+    </div>
+    <button onclick="window.print()" style="height: 36px; padding: 0 14px; cursor: pointer;">Imprimir NF</button>
+  </div>
+
+  <div style="margin: 16px 0; border-bottom: 1px solid #eee; padding-bottom: 12px;">
+    <p style="margin: 4px 0;"><strong>EMITENTE:</strong> {{ pedido.restaurante_nome }} ({{ pedido.restaurante_cidade }})</p>
+    <p style="margin: 4px 0;"><strong>CONSUMIDOR:</strong> {{ pedido.cliente_nome }} — {{ pedido.cliente_email }}</p>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+    <thead>
+      <tr style="border-bottom: 1px solid #333; text-align: left;">
+        <th style="padding: 6px 0;">Item</th>
+        <th>Qtd</th>
+        <th>Unit.</th>
+        <th style="text-align: right;">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in itens %}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 8px 0;">{{ item.produto_nome }}</td>
+        <td>{{ item.quantidade }}x</td>
+        <td>R$ {{ "%.2f"|format(item.preco_unitario) }}</td>
+        <td style="text-align: right;">R$ {{ "%.2f"|format(item.quantidade * item.preco_unitario) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="text-align: right; font-size: 1.1em; margin-top: 12px;">
+    <p style="margin: 4px 0;"><strong>TOTAL PAGO: R$ {{ "%.2f"|format(nf.valor_total) }}</strong></p>
+  </div>
+
+  <div style="margin-top: 20px; padding-top: 12px; border-top: 2px dashed #ccc; font-size: 0.85em; word-break: break-all;">
+    <strong>Chave de Acesso:</strong><br>{{ nf.chave_acesso }}
+  </div>
+</div>
+{% endblock %}
