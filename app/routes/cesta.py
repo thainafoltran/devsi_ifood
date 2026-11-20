@@ -1,3 +1,5 @@
+import random
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.db import run_query
 from app.auth_utils import login_required, usuario_atual
@@ -294,8 +296,70 @@ def fechar():
             commit=True,
         )
 
+    mapa_forma = {
+        "pix": "pix",
+        "cartao_online": "cartao_credito",
+        "cartao_entrega": "cartao_debito",
+        "dinheiro": "dinheiro",
+    }
+    forma_db = mapa_forma.get(forma, "pix")
+    cartao_num = request.form.get("cartao_numero", "").replace(" ", "")
+    cartao_final = cartao_num[-4:] if len(cartao_num) >= 4 else None
+
+    run_query(
+        """INSERT INTO pagamentos (pedido_id, forma, valor, status, cartao_final, transacao_id)
+           VALUES (?, ?, ?, 'aprovado', ?, ?)""",
+        (pedido_id, forma_db, total, cartao_final, f"TXN-{pedido_id}-{random.randint(1000,9999)}"),
+        commit=True,
+    )
+
+    run_query(
+        "INSERT INTO pedido_status_historico (pedido_id, status) VALUES (?, 'recebido')",
+        (pedido_id,),
+        commit=True,
+    )
+
+    numero_nf = f"NF-{datetime.now().strftime('%Y%m')}-{pedido_id:06d}"
+    chave_acesso = "".join(str(random.randint(0, 9)) for _ in range(44))
+    emitida_em = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    run_query(
+        """INSERT INTO notas_fiscais (pedido_id, numero_nf, chave_acesso, valor_total, emitida_em)
+           VALUES (?, ?, ?, ?, ?)""",
+        (pedido_id, numero_nf, chave_acesso, total, emitida_em),
+        commit=True,
+    )
+
     run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
     run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
 
     flash(f"Pedido #{pedido_id} realizado com sucesso!", "success")
-    return redirect(url_for("explorar.restaurantes"))
+    return redirect(url_for("cesta.nota_fiscal", pedido_id=pedido_id))
+
+
+@cesta_bp.route("/nota/<int:pedido_id>")
+@login_required
+def nota_fiscal(pedido_id):
+    u = usuario_atual()
+    pedido = run_query(
+        """SELECT p.*, r.nome AS restaurante_nome, r.cidade AS restaurante_cidade,
+                  c.nome AS cliente_nome, c.email AS cliente_email
+           FROM pedidos p
+           JOIN restaurantes r ON r.id = p.restaurante_id
+           JOIN contas c ON c.id = p.conta_id
+           WHERE p.id = ? AND p.conta_id = ?""",
+        (pedido_id, u["id"]),
+        fetchone=True,
+    )
+    if not pedido:
+        flash("Pedido não encontrado.", "warning")
+        return redirect(url_for("explorar.restaurantes"))
+
+    nf = run_query("SELECT * FROM notas_fiscais WHERE pedido_id = ?", (pedido_id,), fetchone=True)
+    itens = run_query(
+        "SELECT nome AS produto_nome, quantidade, preco_unitario FROM pedido_itens WHERE pedido_id = ?",
+        (pedido_id,),
+        fetch=True,
+    )
+
+    return render_template("cesta/nota_fiscal.html", pedido=pedido, nf=nf, itens=itens)

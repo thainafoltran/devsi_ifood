@@ -146,10 +146,9 @@ def avancar(pedido_id):
         conn.execute("UPDATE pedidos SET status=? WHERE id=?", (novo, pedido_id))
         conn.execute("INSERT INTO pedido_status_historico (pedido_id, status) VALUES (?,?)", (pedido_id, novo))
         
-        # Só aprova na entrega se o método escolhido foi a maquininha de cartão
         if novo == StatusPedido.ENTREGUE:
             conn.execute("""UPDATE pagamentos SET status='aprovado' 
-                            WHERE pedido_id=? AND status='pendente' AND forma_pagamento='maquininha'""", 
+                            WHERE pedido_id=? AND status='pendente'""", 
                          (pedido_id,))
                          
     flash(f"Pedido #{pedido_id:06d}: {ROTULOS[novo]}.", "success")

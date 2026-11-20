@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash
 from app.db import run_query, IntegrityError
 
@@ -118,3 +118,16 @@ def excluir(conta_id):
     run_query("DELETE FROM contas WHERE id = ?", (conta_id,), commit=True)
     flash("Conta excluída com sucesso!", "success")
     return redirect(url_for("contas.listar"))
+
+# TROCA RÁPIDA DE CONTA
+@contas_bp.route("/<int:conta_id>/entrar", methods=["POST", "GET"])
+def entrar_como(conta_id):
+    conta = run_query("SELECT * FROM contas WHERE id = ? AND ativo = 1", (conta_id,), fetchone=True)
+    if not conta:
+        flash("Conta não encontrada ou inativa.", "danger")
+        return redirect(url_for("contas.listar"))
+    session.clear()
+    session.permanent = True
+    session["conta_id"] = conta["id"]
+    flash(f"Você entrou como {conta['nome']} ({conta['email']}).", "success")
+    return redirect(url_for("explorar.restaurantes"))
