@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS pedido_status_historico (
 
 
 
-#ENTREGA 1 
+-- ENTREGA 1 
 -- -- ============================================================
 -- -- APP entregas - Script de criação das tabelas (SQLite)
 -- -- Entrega 1: Autenticação (contas), Restaurantes e Produtos
