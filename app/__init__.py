@@ -36,7 +36,7 @@ def create_app():
     init_oauth(app)
     #init_oauth_facebook()
 
-    from devsi_ifood.app.auth_utils import usuario_atual
+    from app.auth_utils import usuario_atual
     from app.routes.cesta import quantidade_na_cesta
 
     @app.context_processor
