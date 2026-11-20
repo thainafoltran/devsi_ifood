@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Restaurantes{% endblock %}
 {% block content %}
-  <h2 class="mb-4">Restaurantes cadastrados</h2>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Restaurantes cadastrados</h2>
+    <a href="{{ url_for('restaurantes.criar') }}" class="btn btn-success">+ Novo Restaurante</a>
+  </div>
 
   <table class="table table-striped bg-white shadow-sm">
     <thead>
