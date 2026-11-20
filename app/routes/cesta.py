@@ -49,7 +49,7 @@ def ver():
     )
 
     itens = []
-    subtotal = 0
+    subtotal = 0.0
     for r in rows:
         item = dict(r)
         item["total_item"] = item["preco"] * item["quantidade"]
@@ -175,39 +175,127 @@ def limpar():
 @login_required
 def fechar():
     u = usuario_atual()
-    cesta = run_query("SELECT * FROM cestas WHERE conta_id = ?", (u["id"],), fetchone=True)
+    cesta = run_query(
+        """SELECT c.id, c.restaurante_id, r.nome AS restaurante_nome, r.taxa_entrega
+           FROM cestas c
+           JOIN restaurantes r ON r.id = c.restaurante_id
+           WHERE c.conta_id = ?
+           ORDER BY c.id DESC LIMIT 1""",
+        (u["id"],),
+        fetchone=True,
+    )
     if not cesta:
         flash("Sua cesta está vazia.", "warning")
         return redirect(url_for("cesta.ver"))
 
-    itens = run_query(
-        """SELECT ci.quantidade, p.id AS produto_id, p.preco
+    rows = run_query(
+        """SELECT ci.quantidade, p.id AS produto_id, p.nome, p.preco
            FROM cesta_itens ci
            JOIN produtos p ON p.id = ci.produto_id
            WHERE ci.cesta_id = ?""",
         (cesta["id"],),
         fetch=True,
     )
-    if not itens:
+    if not rows:
         flash("Sua cesta está vazia.", "warning")
         return redirect(url_for("cesta.ver"))
 
-    total = sum(i["preco"] * i["quantidade"] for i in itens)
+    itens = []
+    subtotal = 0.0
+    for r in rows:
+        item = dict(r)
+        item["total_item"] = item["preco"] * item["quantidade"]
+        subtotal += item["total_item"]
+        itens.append(item)
+
+    tipo = request.values.get("tipo_entrega", "entrega")
+    if tipo not in ("entrega", "retirada"):
+        tipo = "entrega"
+
+    try:
+        enderecos = run_query(
+            "SELECT * FROM enderecos WHERE conta_id = ? ORDER BY id DESC",
+            (u["id"],),
+            fetch=True,
+        )
+    except Exception:
+        enderecos = []
+
+    endereco_id = request.values.get("endereco_id", type=int)
+    if not endereco_id and enderecos:
+        endereco_id = enderecos[0]["id"]
+
+    erro_frete = None
+    if tipo == "entrega" and not enderecos:
+        erro_frete = "Cadastre um endereço ou escolha 'Retirar no local'."
+
+    frete = float(cesta["taxa_entrega"] or 0.0) if tipo == "entrega" else 0.0
+    total = subtotal + frete
+
+    formas = {
+        "pix": "PIX",
+        "cartao_online": "Cartão de crédito (pelo app)",
+        "cartao_entrega": "Cartão na entrega",
+        "dinheiro": "Dinheiro",
+    }
+    forma = request.form.get("forma_pagamento", "pix")
+
+    if request.method == "GET":
+        return render_template(
+            "cesta/fechar.html",
+            cesta=cesta,
+            tipo=tipo,
+            enderecos=enderecos,
+            endereco_id=endereco_id,
+            erro_frete=erro_frete,
+            itens=itens,
+            subtotal=subtotal,
+            dist=None,
+            frete=frete,
+            total=total,
+            formas=formas,
+            forma=forma,
+        )
+
+    if erro_frete:
+        flash(erro_frete, "danger")
+        return redirect(url_for("cesta.fechar", tipo_entrega=tipo))
+
+    endereco_texto = None
+    if tipo == "entrega" and endereco_id:
+        end = next((e for e in enderecos if e["id"] == endereco_id), None)
+        if end:
+            endereco_texto = f"{end['logradouro']}, {end['numero']} - {end['bairro']}, {end['cidade']}"
+
     pedido_id = run_query(
-        """INSERT INTO pedidos (conta_id, restaurante_id, status, total)
-           VALUES (?, ?, 'Confirmado', ?)""",
-        (u["id"], cesta["restaurante_id"], total),
+        """INSERT INTO pedidos
+           (conta_id, restaurante_id, endereco_id, endereco_texto,
+            tipo_entrega, subtotal, taxa_frete, total, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'recebido')""",
+        (
+            u["id"],
+            cesta["restaurante_id"],
+            endereco_id if tipo == "entrega" else None,
+            endereco_texto,
+            tipo,
+            subtotal,
+            frete,
+            total,
+        ),
         commit=True,
     )
+
     for i in itens:
         run_query(
-            """INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario)
-               VALUES (?, ?, ?, ?)""",
-            (pedido_id, i["produto_id"], i["quantidade"], i["preco"]),
+            """INSERT INTO pedido_itens
+               (pedido_id, produto_id, nome, preco_unitario, quantidade, total_item)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (pedido_id, i["produto_id"], i["nome"], i["preco"], i["quantidade"], i["total_item"]),
             commit=True,
         )
 
     run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
     run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
+
     flash(f"Pedido #{pedido_id} realizado com sucesso!", "success")
     return redirect(url_for("explorar.restaurantes"))
