@@ -50,11 +50,17 @@ def ver():
     return render_template("cesta/cesta.html", cesta=cesta, itens=itens, total=total)
 
 
+@cesta_bp.route("/adicionar", methods=["POST"])
 @cesta_bp.route("/adicionar/<int:produto_id>", methods=["POST"])
 @login_required
-def adicionar(produto_id):
+def adicionar(produto_id=None):
     u = usuario_atual()
+    produto_id = produto_id or request.form.get("produto_id", type=int)
     qtd = max(1, int(request.form.get("quantidade", 1)))
+
+    if not produto_id:
+        flash("Produto inválido.", "danger")
+        return redirect(request.referrer or url_for("explorar.restaurantes"))
 
     produto = run_query(
         "SELECT id, restaurante_id FROM produtos WHERE id = ?",
@@ -71,7 +77,6 @@ def adicionar(produto_id):
         fetchone=True,
     )
 
-    # Se já existe cesta de outro restaurante, limpa para iniciar nova
     if cesta and cesta["restaurante_id"] != produto["restaurante_id"]:
         run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
         run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
