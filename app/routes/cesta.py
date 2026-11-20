@@ -36,19 +36,27 @@ def ver():
         fetchone=True,
     )
     if not cesta:
-        return render_template("cesta/cesta.html", cesta=None, itens=[], total=0)
+        return render_template("cesta/index.html", cesta=None, itens=[], subtotal=0)
 
-    itens = run_query(
-        """SELECT ci.id, ci.quantidade, p.id AS produto_id, p.nome, p.preco, p.imagem_url AS imagem
+    rows = run_query(
+        """SELECT ci.id, ci.quantidade, p.id AS produto_id, p.nome, p.preco,
+                  p.disponivel, p.imagem_url AS imagem
            FROM cesta_itens ci
            JOIN produtos p ON p.id = ci.produto_id
            WHERE ci.cesta_id = ?""",
         (cesta["id"],),
         fetch=True,
     )
-    total = sum((item["preco"] * item["quantidade"]) for item in itens)
-    return render_template("cesta/cesta.html", cesta=cesta, itens=itens, total=total)
 
+    itens = []
+    subtotal = 0
+    for r in rows:
+        item = dict(r)
+        item["total_item"] = item["preco"] * item["quantidade"]
+        subtotal += item["total_item"]
+        itens.append(item)
+
+    return render_template("cesta/index.html", cesta=cesta, itens=itens, subtotal=subtotal)
 
 @cesta_bp.route("/adicionar", methods=["POST"])
 @cesta_bp.route("/adicionar/<int:produto_id>", methods=["POST"])
