@@ -1,0 +1,8 @@
+{% extends "base2.html" %}{% block titulo %}Painel do restaurante{% endblock %}
+{% block conteudo %}<h2>Pedidos recebidos</h2>
+{% for p in pedidos %}<div class="card row">
+  <div style="flex:1"><b>#{{ '%06d'|format(p.id) }}</b> · {{ p.restaurante_nome }} · {{ p.cliente_nome }}<br>
+  <span class="mut">{{ p.criado_em }} · {{ p.total|brl }} · {{ 'Entrega' if p.tipo_entrega=='entrega' else 'Retirada' }}</span></div>
+  <span class="tag">{{ rotulos[p.status] }}</span>
+  {% if p.proximo %}<form method="post" action="{{ url_for('pedidos.avancar', pedido_id=p.id) }}"><button class="btn sm">→ {{ rotulos[p.proximo] }}</button></form>{% endif %}
+</div>{% else %}<p class="mut">Nenhum pedido para seus restaurantes.</p>{% endfor %}{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base2.html" %}{% block titulo %}Nota do pedido{% endblock %}
+{% block conteudo %}
+<div class="card" style="max-width:560px;margin:auto;font-family:monospace">
+<h3 style="text-align:center">COMPROVANTE DO PEDIDO #{{ '%06d'|format(p.id) }}</h3>
+<p>Restaurante: {{ p.restaurante_nome }}<br>{{ p.restaurante_endereco }}<br>Cliente: {{ p.cliente_nome }} ({{ p.cliente_email }})<br>Data: {{ p.criado_em }}<br>Status: {{ rotulos[p.status] }}</p>
+<table>{% for i in itens %}<tr><td>{{ i.quantidade }} x {{ i.nome }}<br><span class="mut">{{ i.preco_unitario|brl }} un.</span></td><td align="right">{{ i.total_item|brl }}</td></tr>{% endfor %}
+<tr><td>Subtotal</td><td align="right">{{ p.subtotal|brl }}</td></tr><tr><td>Frete</td><td align="right">{{ p.taxa_frete|brl }}</td></tr>
+<tr><td><b>TOTAL</b></td><td align="right"><b>{{ p.total|brl }}</b></td></tr></table>
+<p>{% if p.tipo_entrega=='entrega' %}Entrega: {{ p.endereco_texto }}{% else %}Retirada no local{% endif %}<br>
+Pagamento: {{ formas[pg.forma] }}{% if pg.cartao_final %} {{ pg.bandeira }} **** {{ pg.cartao_final }}{% endif %} ({{ pg.status }})
+{% if pg.transacao_id %}<br>Transação: {{ pg.transacao_id }}{% endif %}</p>
+<p class="mut">Documento sem valor fiscal (projeto acadêmico).</p>
+<button class="btn sm" onclick="window.print()">Imprimir</button> <a class="btn sec sm" href="{{ url_for('pedidos.detalhe', pedido_id=p.id) }}">Voltar</a></div>
+{% endblock %}

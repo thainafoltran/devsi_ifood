@@ -1,0 +1,7 @@
+{% extends "base2.html" %}{% block titulo %}Meus pedidos{% endblock %}
+{% block conteudo %}<h2>Meus pedidos</h2>
+{% for p in pedidos %}<div class="card row">
+  <div style="flex:1"><b>#{{ '%06d'|format(p.id) }}</b> · {{ p.restaurante_nome }}<br><span class="mut">{{ p.criado_em }} · {{ p.total|brl }}</span></div>
+  <span class="tag">{{ rotulos[p.status] }}</span>
+  <a class="btn sm" href="{{ url_for('pedidos.detalhe', pedido_id=p.id) }}">Acompanhar</a></div>
+{% else %}<p class="mut">Você ainda não fez pedidos.</p>{% endfor %}{% endblock %}

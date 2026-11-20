@@ -1,0 +1,22 @@
+{% extends "base2.html" %}{% block titulo %}Pedido #{{ '%06d'|format(p.id) }}{% endblock %}
+{% block conteudo %}
+{% if p.status not in ('entregue','cancelado') %}<meta http-equiv="refresh" content="20">{% endif %}
+<h2>Pedido #{{ '%06d'|format(p.id) }} — {{ p.restaurante_nome }}</h2>
+<div class="grid">
+<div class="card"><h3>Acompanhamento</h3>
+{% if p.status == 'cancelado' %}<p><b>Pedido cancelado.</b></p>
+{% else %}<ul class="steps">{% for s in etapas %}
+  <li class="{{ 'ok' if loop.index0 < atual else ('now' if loop.index0 == atual else '') }}">{{ rotulos[s] }}
+  {% if hist.get(s) %}<br><span class="mut">{{ hist[s] }}</span>{% endif %}</li>{% endfor %}</ul>
+  <p class="mut">Esta página atualiza sozinha a cada 20 s.</p>{% endif %}
+{% if p.status == 'recebido' %}<form method="post" action="{{ url_for('pedidos.cancelar', pedido_id=p.id) }}" onsubmit="return confirm('Cancelar o pedido?')"><button class="btn sec">Cancelar pedido</button></form>{% endif %}
+</div>
+<div class="card"><h3>Resumo</h3>
+<table>{% for i in itens %}<tr><td>{{ i.quantidade }}× {{ i.nome }}</td><td align="right">{{ i.total_item|brl }}</td></tr>{% endfor %}
+<tr><td>Subtotal</td><td align="right">{{ p.subtotal|brl }}</td></tr><tr><td>Frete</td><td align="right">{{ p.taxa_frete|brl }}</td></tr>
+<tr><td><b>Total</b></td><td align="right" class="price">{{ p.total|brl }}</td></tr></table>
+<p class="mut">{% if p.tipo_entrega=='entrega' %}Entrega em: {{ p.endereco_texto }}{% else %}Retirada em: {{ p.restaurante_endereco }}{% endif %}</p>
+<p class="mut">Pagamento: {{ formas[pg.forma] }}{% if pg.cartao_final %} ({{ pg.bandeira }} final {{ pg.cartao_final }}){% endif %} — {{ pg.status }}</p>
+<a class="btn sec sm" href="{{ url_for('pedidos.nota', pedido_id=p.id) }}">Ver nota</a></div>
+</div>
+{% endblock %}
