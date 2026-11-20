@@ -8,6 +8,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app.db import run_query
 from app.auth_utils import safe_next, usuario_atual
 from app.services.notificacao import enviar_codigo, normalizar_telefone
+from functools import wraps
+from flask import session, redirect, url_for, flash
 
 auth_codigo_bp = Blueprint("auth_codigo", __name__)
 
@@ -172,6 +174,16 @@ def reenviar():
     _, erro = _gerar_e_enviar(conta, p["canal"], p["destino"])
     flash(erro or "Novo código enviado.", "danger" if erro else "success")
     return redirect(url_for("auth_codigo.verificar"))
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Verifica se o utilizador está logado (ajuste 'usuario_id' se a sua sessão usar outro nome)
+        if "usuario_id" not in session:
+            flash("Por favor, faça login para aceder a esta página.", "warning")
+            return redirect(url_for("contas.login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @auth_codigo_bp.route("/sair", methods=["POST", "GET"])
