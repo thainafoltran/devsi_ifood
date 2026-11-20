@@ -1,0 +1,14 @@
+<div class="card">
+  <div class="row"><b style="flex:1">{{ p.nome }}</b>
+  {% if usuario %}<form method="post" action="{{ url_for('explorar.favoritar_produto', produto_id=p.id) }}">
+    <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}"><button class="btn sec sm">{{ '♥' if p.favorito else '♡' }}</button></form>{% endif %}</div>
+  <span class="tag">{{ p.categoria }}</span>
+  {% if p.restaurante_nome %}<span class="mut"> · <a href="{{ url_for('explorar.cardapio', restaurante_id=p.restaurante_id) }}">{{ p.restaurante_nome }}</a>{% if p.distancia_km is not none %} · {{ p.distancia_km }} km{% endif %}</span>{% endif %}
+  <p class="mut">{{ p.descricao or '' }}</p>
+  <form method="post" action="{{ url_for('cesta.adicionar') }}" class="row">
+    <span class="price" style="flex:1">{{ p.preco|brl }}</span>
+    <input type="hidden" name="produto_id" value="{{ p.id }}"><input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+    <input type="number" name="quantidade" value="1" min="1" max="20" style="width:4rem">
+    <button class="btn sm">Adicionar</button>
+  </form>
+</div>

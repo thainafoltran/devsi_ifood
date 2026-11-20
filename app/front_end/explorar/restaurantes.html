@@ -1,0 +1,18 @@
+{% extends "base2.html" %}{% block titulo %}Restaurantes{% endblock %}
+{% block conteudo %}
+<h2>Restaurantes</h2>
+{% include "explorar/_filtros.html" %}
+<div class="grid">
+{% for r in restaurantes %}
+<div class="card">
+  <div class="row"><b style="flex:1"><a href="{{ url_for('explorar.cardapio', restaurante_id=r.id) }}">{{ r.nome }}</a></b>
+  {% if usuario %}<form method="post" action="{{ url_for('explorar.favoritar_restaurante', restaurante_id=r.id) }}">
+    <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}"><button class="btn sec sm" title="Favorito">{{ '♥' if r.favorito else '♡' }}</button></form>{% endif %}</div>
+  <span class="tag">{{ r.categoria }}</span> ⭐ {{ '%.1f'|format(r.avaliacao) }}<br>
+  <span class="mut">{{ r.tempo_entrega_min }}-{{ r.tempo_entrega_max }} min · frete {{ r.taxa_entrega|brl }}
+  {% if r.distancia_km is not none %} · {{ r.distancia_km }} km{% endif %}</span><br>
+  <span class="mut">{{ r.cidade }}</span>
+</div>
+{% else %}<p class="mut">Nenhum restaurante encontrado.</p>{% endfor %}
+</div>
+{% endblock %}

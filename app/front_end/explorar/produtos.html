@@ -1,0 +1,7 @@
+{% extends "base2.html" %}{% block titulo %}Produtos{% endblock %}
+{% block conteudo %}
+<h2>Lanches e refeições</h2>
+{% include "explorar/_filtros.html" %}
+<div class="grid">{% for p in produtos %}{% include "explorar/_produto_card.html" %}
+{% else %}<p class="mut">Nenhum produto encontrado.</p>{% endfor %}</div>
+{% endblock %}

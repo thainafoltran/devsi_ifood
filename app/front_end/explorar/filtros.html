@@ -1,0 +1,16 @@
+<form method="get" class="card row" id="filtros">
+  <input name="q" placeholder="Buscar..." value="{{ f.get('q','') }}">
+  <select name="categoria"><option value="">Todos os tipos</option>
+    {% for c in categorias %}<option {{ 'selected' if f.get('categoria')==c }}>{{ c }}</option>{% endfor %}</select>
+  {% if usuario %}<label style="margin:0"><input type="checkbox" name="favoritos" value="1" {{ 'checked' if f.get('favoritos')=='1' }}> Favoritos</label>{% endif %}
+  <label style="margin:0"><input type="checkbox" name="proximos" value="1" {{ 'checked' if f.get('proximos')=='1' }}> Próximos a mim</label>
+  <input name="raio" type="number" min="1" max="50" step="1" value="{{ raio|int }}" style="width:5rem" title="Raio em km"> km
+  {% if enderecos %}<select name="endereco_id"><option value="">Endereço principal</option>
+    {% for e in enderecos %}<option value="{{ e.id }}" {{ 'selected' if f.get('endereco_id')|string==e.id|string }}>{{ e.apelido }}</option>{% endfor %}</select>{% endif %}
+  <input type="hidden" name="lat" id="lat" value="{{ f.get('lat','') }}"><input type="hidden" name="lng" id="lng" value="{{ f.get('lng','') }}">
+  <button type="button" class="btn sec sm" onclick="gps()">📍 Usar GPS</button>
+  <button class="btn sm">Filtrar</button><a class="btn sec sm" href="{{ request.path }}">Limpar</a>
+</form>
+{% if f.get('proximos')=='1' and ref %}<p class="mut">Distâncias a partir de: {{ ref.fonte }} (raio de {{ raio|int }} km)</p>{% endif %}
+<script>function gps(){navigator.geolocation.getCurrentPosition(p=>{lat.value=p.coords.latitude;lng.value=p.coords.longitude;
+ document.querySelector('[name=proximos]').checked=true;filtros.submit()},()=>alert('Não foi possível obter a localização.'))}</script>
