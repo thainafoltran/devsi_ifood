@@ -58,6 +58,7 @@ def ver():
 
     return render_template("cesta/index.html", cesta=cesta, itens=itens, subtotal=subtotal)
 
+
 @cesta_bp.route("/adicionar", methods=["POST"])
 @cesta_bp.route("/adicionar/<int:produto_id>", methods=["POST"])
 @login_required
@@ -121,6 +122,29 @@ def adicionar(produto_id=None):
     return redirect(request.referrer or url_for("cesta.ver"))
 
 
+@cesta_bp.route("/atualizar/<int:item_id>", methods=["POST"])
+@login_required
+def atualizar(item_id):
+    u = usuario_atual()
+    qtd = request.form.get("quantidade", type=int) or 0
+    if qtd <= 0:
+        run_query(
+            """DELETE FROM cesta_itens
+               WHERE id = ? AND cesta_id IN (SELECT id FROM cestas WHERE conta_id = ?)""",
+            (item_id, u["id"]),
+            commit=True,
+        )
+    else:
+        run_query(
+            """UPDATE cesta_itens SET quantidade = ?
+               WHERE id = ? AND cesta_id IN (SELECT id FROM cestas WHERE conta_id = ?)""",
+            (qtd, item_id, u["id"]),
+            commit=True,
+        )
+    flash("Quantidade atualizada.", "success")
+    return redirect(url_for("cesta.ver"))
+
+
 @cesta_bp.route("/remover/<int:item_id>", methods=["POST"])
 @login_required
 def remover(item_id):
@@ -133,3 +157,57 @@ def remover(item_id):
     )
     flash("Item removido da cesta.", "info")
     return redirect(url_for("cesta.ver"))
+
+
+@cesta_bp.route("/limpar", methods=["POST"])
+@login_required
+def limpar():
+    u = usuario_atual()
+    cesta = run_query("SELECT id FROM cestas WHERE conta_id = ?", (u["id"],), fetchone=True)
+    if cesta:
+        run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
+        run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
+    flash("Cesta esvaziada.", "info")
+    return redirect(url_for("cesta.ver"))
+
+
+@cesta_bp.route("/fechar", methods=["GET", "POST"])
+@login_required
+def fechar():
+    u = usuario_atual()
+    cesta = run_query("SELECT * FROM cestas WHERE conta_id = ?", (u["id"],), fetchone=True)
+    if not cesta:
+        flash("Sua cesta está vazia.", "warning")
+        return redirect(url_for("cesta.ver"))
+
+    itens = run_query(
+        """SELECT ci.quantidade, p.id AS produto_id, p.preco
+           FROM cesta_itens ci
+           JOIN produtos p ON p.id = ci.produto_id
+           WHERE ci.cesta_id = ?""",
+        (cesta["id"],),
+        fetch=True,
+    )
+    if not itens:
+        flash("Sua cesta está vazia.", "warning")
+        return redirect(url_for("cesta.ver"))
+
+    total = sum(i["preco"] * i["quantidade"] for i in itens)
+    pedido_id = run_query(
+        """INSERT INTO pedidos (conta_id, restaurante_id, status, total)
+           VALUES (?, ?, 'Confirmado', ?)""",
+        (u["id"], cesta["restaurante_id"], total),
+        commit=True,
+    )
+    for i in itens:
+        run_query(
+            """INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario)
+               VALUES (?, ?, ?, ?)""",
+            (pedido_id, i["produto_id"], i["quantidade"], i["preco"]),
+            commit=True,
+        )
+
+    run_query("DELETE FROM cesta_itens WHERE cesta_id = ?", (cesta["id"],), commit=True)
+    run_query("DELETE FROM cestas WHERE id = ?", (cesta["id"],), commit=True)
+    flash(f"Pedido #{pedido_id} realizado com sucesso!", "success")
+    return redirect(url_for("explorar.restaurantes"))
