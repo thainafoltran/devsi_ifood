@@ -83,9 +83,14 @@ def nota(pedido_id):
     if not p:
         flash("Pedido não encontrado.", "warning")
         return redirect(url_for("pedidos.listar"))
-    itens = run_query("SELECT * FROM pedido_itens WHERE pedido_id=?", (pedido_id,), fetch=True)
+    itens = run_query(
+        "SELECT *, nome AS produto_nome FROM pedido_itens WHERE pedido_id=?",
+        (pedido_id,),
+        fetch=True,
+    )
     pg = run_query("SELECT * FROM pagamentos WHERE pedido_id=?", (pedido_id,), fetchone=True)
-    return render_template("pedidos/nota.html", p=p, itens=itens, pg=pg, formas=FORMAS, rotulos=ROTULOS)
+    nf = run_query("SELECT * FROM notas_fiscais WHERE pedido_id=?", (pedido_id,), fetchone=True)
+    return render_template("pedidos/nota.html", p=p, pedido=p, itens=itens, pg=pg, nf=nf, formas=FORMAS, rotulos=ROTULOS)
 
 
 @pedidos_bp.route("/<int:pedido_id>/cancelar", methods=["POST"])
