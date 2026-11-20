@@ -6,7 +6,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from app.db import run_query
-from app.auth_utils import safe_next, usuario_atual
+#from app.auth_utils import safe_next, usuario_atual
 from app.services.notificacao import enviar_codigo, normalizar_telefone
 
 auth_codigo_bp = Blueprint("auth_codigo", __name__)
