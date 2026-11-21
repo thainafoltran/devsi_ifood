@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Restaurantes • Delivery Mobile</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f5f5;
+      padding-bottom: 75px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .mobile-shell {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      min-height: 100vh;
+      box-shadow: 0 0 20px rgba(0,0,0,0.06);
+    }
+    .app-header {
+      background: #ea1d2c;
+      color: #fff;
+      padding: 16px 16px 20px;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+    .rest-card {
+      border: 1px solid #eee;
+      border-radius: 14px;
+      transition: transform 0.15s ease;
+    }
+    .rest-card:active {
+      transform: scale(0.99);
+    }
+    .rest-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #f1f1f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #ea1d2c;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-top: 1px solid #e5e5e5;
+      z-index: 1000;
+    }
+    .bottom-nav a {
+      text-decoration: none;
+      color: #666;
+      font-size: 0.78rem;
+      padding: 8px 0;
+    }
+    .bottom-nav a.active {
+      color: #ea1d2c;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="mobile-shell">
+  <!-- Cabeçalho Mobile -->
+  <div class="app-header">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <small class="opacity-75 d-block">Entregar em</small>
+        <a href="{{ url_for('enderecos.listar') if url_for else '/enderecos/' }}" class="text-white text-decoration-none fw-semibold">
+          Meus Endereços ▾
+        </a>
+      </div>
+      <a href="/explorar/restaurantes" class="btn btn-sm btn-light text-danger fw-semibold rounded-pill">
+        Versão Web
+      </a>
+    </div>
+
+    <!-- Busca -->
+    <form method="get" class="mt-2">
+      <div class="input-group">
+        <input type="text" name="q" value="{{ request.args.get('q', '') }}"
+               class="form-control border-0 rounded-start-pill ps-3"
+               placeholder="Buscar restaurante ou prato...">
+        <button class="btn btn-light text-danger fw-semibold rounded-end-pill pe-3" type="submit">
+          Buscar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Conteúdo -->
+  <div class="p-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} py-2 small">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0">Restaurantes disponíveis</h6>
+      <button type="button" onclick="filtrarProximos()" class="btn btn-sm btn-outline-danger rounded-pill">
+        📍 Perto de mim
+      </button>
+    </div>
+
+    {% set lista = restaurantes if restaurantes is defined else [] %}
+    {% if lista %}
+      <div class="d-flex flex-column gap-2">
+        {% for r in lista %}
+          {% set aberto = r.aberto if r.aberto is defined else (r.disponivel if r.disponivel is defined else 1) %}
+          <div class="card rest-card p-2 shadow-sm {{ 'opacity-50' if not aberto }}">
+            <div class="d-flex align-items-center gap-3">
+              {% if r.logo_url or r.imagem_url %}
+                <img src="{{ r.logo_url or r.imagem_url }}" alt="{{ r.nome }}" class="rest-logo">
+              {% else %}
+                <div class="rest-logo">{{ r.nome[:2]|upper }}</div>
+              {% endif %}
+
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                  <a href="/explorar/restaurante/{{ r.id }}" class="text-dark text-decoration-none fw-bold">
+                    {{ r.nome }}
+                  </a>
+                  <span class="badge {{ 'bg-success-subtle text-success' if aberto else 'bg-secondary-subtle text-secondary' }}">
+                    {{ 'Aberto' if aberto else 'Fechado' }}
+                  </span>
+                </div>
+
+                <div class="text-muted small mt-1">
+                  {{ r.categoria or 'Restaurante' }}
+                  {% if r.distancia_km is defined and r.distancia_km is not none %}
+                    • {{ '%.1f'|format(r.distancia_km) }} km
+                  {% endif %}
+                </div>
+
+                <div class="small mt-1">
+                  {% set taxa = r.taxa_entrega or 0 %}
+                  {% if taxa == 0 %}
+                    <span class="text-success fw-semibold">Entrega grátis</span>
+                  {% else %}
+                    <span class="text-muted">Entrega: R$ {{ '%.2f'|format(taxa)|replace('.', ',') }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <p class="mb-2">Nenhum restaurante encontrado.</p>
+        <a href="/restaurantes/novo" class="btn btn-sm btn-danger rounded-pill">Cadastrar restaurante</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Barra de navegação inferior estilo App -->
+  <nav class="bottom-nav">
+    <div class="d-flex justify-content-around text-center">
+      <a href="/mobile/restaurantes" class="active">🏠<br>Início</a>
+      <a href="/cesta/">🛒<br>Cesta</a>
+      <a href="/pedidos/">🧾<br>Pedidos</a>
+      <a href="/contas/">👤<br>Perfil</a>
+    </div>
+  </nav>
+</div>
+
+<script>
+function filtrarProximos() {
+  if (!navigator.geolocation) {
+    alert("Geolocalização não suportada neste navegador.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("lat", pos.coords.latitude);
+      url.searchParams.set("lng", pos.coords.longitude);
+      window.location.href = url.toString();
+    },
+    () => alert("Não foi possível obter sua localização.")
+  );
+}
+</script>
+</body>
+</html>
