@@ -117,6 +117,27 @@ def produtos():
 
 
 # ------------------------- FAVORITOS -------------------------
+@explorar_bp.route("/favoritos")
+@login_required
+def favoritos():
+    """Tudo o que a conta favoritou: restaurantes e produtos (lanches/refeições)."""
+    uid = usuario_atual()["id"]
+    rests = run_query("""SELECT r.*, 1 AS favorito
+                         FROM favoritos_restaurantes f
+                         JOIN restaurantes r ON r.id = f.restaurante_id AND r.ativo = 1
+                         WHERE f.conta_id = ? ORDER BY f.criado_em DESC""", (uid,), fetch=True)
+    prods = run_query("""SELECT p.*, r.nome AS restaurante_nome, r.cidade, r.latitude, r.longitude,
+                                r.taxa_entrega, 1 AS favorito
+                         FROM favoritos_produtos f
+                         JOIN produtos p ON p.id = f.produto_id AND p.disponivel = 1
+                         JOIN restaurantes r ON r.id = p.restaurante_id AND r.ativo = 1
+                         WHERE f.conta_id = ? ORDER BY f.criado_em DESC""", (uid,), fetch=True)
+    ref = origem(uid, request.args)
+    anotar_distancia(rests, ref)
+    anotar_distancia(prods, ref)
+    return render_template("explorar/favoritos.html", restaurantes=rests, produtos=prods)
+
+
 def _alternar(tabela, coluna, item_id):
     uid = usuario_atual()["id"]
     existe = run_query(f"SELECT 1 FROM {tabela} WHERE conta_id=? AND {coluna}=?", (uid, item_id), fetchone=True)
