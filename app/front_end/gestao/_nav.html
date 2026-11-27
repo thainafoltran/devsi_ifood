@@ -1,0 +1,8 @@
+{# Barra de atalhos das telas de Gestão. Use: {% set aba = 'contas' %}{% include 'gestao/_nav.html' %} #}
+<div class="subnav">
+  <a href="{{ url_for('gestao.index') }}" class="{{ 'on' if aba == 'inicio' }}">Gestão</a>
+  <a href="{{ url_for('contas.listar') }}" class="{{ 'on' if aba == 'contas' }}">Contas</a>
+  <a href="{{ url_for('restaurantes.listar') }}" class="{{ 'on' if aba == 'restaurantes' }}">Restaurantes</a>
+  <a href="{{ url_for('produtos.listar') }}" class="{{ 'on' if aba == 'produtos' }}">Lanches e refeições</a>
+  <a href="{{ url_for('enderecos.listar') }}" class="{{ 'on' if aba == 'enderecos' }}">Meus locais</a>
+</div>
