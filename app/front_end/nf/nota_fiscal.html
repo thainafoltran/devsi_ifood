@@ -7,7 +7,7 @@
     <div>
       <h2 style="margin: 0;">DANFE NFC-e - Nota Fiscal</h2>
       <p style="margin: 4px 0;"><strong>Nº NF:</strong> {{ nf.numero_nf }} | <strong>Pedido:</strong> #{{ pedido.id }}</p>
-      <p style="margin: 4px 0;"><strong>Emissão:</strong> {{ nf.emitida_em }}</p>
+      <p style="margin: 4px 0;"><strong>Emissão:</strong> {{ nf.emitida_em|data_br }}</p>
     </div>
     <button onclick="window.print()" style="height: 36px; padding: 0 14px; cursor: pointer;">Imprimir NF</button>
   </div>
