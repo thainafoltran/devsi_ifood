@@ -1,0 +1,22 @@
+{% extends "base2.html" %}{% block titulo %}Gestão{% endblock %}
+{% block conteudo %}
+{% set aba = 'inicio' %}{% include 'gestao/_nav.html' %}
+<h2>Gestão (CRUD)</h2>
+<p class="mut">Aqui ficam as telas de <b>cadastro e manutenção</b> dos dados do sistema. CRUD é a sigla de
+<b>C</b>reate (criar), <b>R</b>ead (consultar), <b>U</b>pdate (editar) e <b>D</b>elete (excluir): em cada tela
+dá para incluir, ver, alterar e apagar registros, que são gravados no banco de dados.</p>
+<div class="hub">
+  <div class="card"><h3>Contas</h3><p class="mut">Usuários do sistema (cliente e dono de restaurante).</p>
+    <p><span class="tag">{{ n.contas }} cadastradas</span></p>
+    <a class="btn sm" href="{{ url_for('contas.listar') }}">Abrir</a> <a class="btn sec sm" href="{{ url_for('contas.criar') }}">+ Nova</a></div>
+  <div class="card"><h3>Restaurantes</h3><p class="mut">Restaurantes e seus donos. O dono é quem vê os pedidos no Painel Loja.</p>
+    <p><span class="tag">{{ n.restaurantes }} cadastrados</span></p>
+    <a class="btn sm" href="{{ url_for('restaurantes.listar') }}">Abrir</a> <a class="btn sec sm" href="{{ url_for('restaurantes.criar') }}">+ Novo</a></div>
+  <div class="card"><h3>Lanches e refeições</h3><p class="mut">O cardápio de cada restaurante: nome, categoria, preço e disponibilidade.</p>
+    <p><span class="tag">{{ n.produtos }} cadastrados</span></p>
+    <a class="btn sm" href="{{ url_for('produtos.listar') }}">Abrir</a> <a class="btn sec sm" href="{{ url_for('produtos.criar') }}">+ Novo</a></div>
+  <div class="card"><h3>Meus locais</h3><p class="mut">Endereços de entrega da sua conta.</p>
+    <p><span class="tag">{{ n.enderecos }} cadastrados</span></p>
+    <a class="btn sm" href="{{ url_for('enderecos.listar') }}">Abrir</a> <a class="btn sec sm" href="{{ url_for('enderecos.criar') }}">+ Novo</a></div>
+</div>
+{% endblock %}
