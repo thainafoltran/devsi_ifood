@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.db import run_query, IntegrityError
+from app.auth_utils import usuario_atual
 
 restaurantes_bp = Blueprint("restaurantes", __name__, url_prefix="/restaurantes")
 
@@ -31,8 +32,10 @@ def listar():
 @restaurantes_bp.route("/novo", methods=["GET", "POST"])
 def criar():
     if request.method == "GET":
+        u = usuario_atual()
         return render_template(
-            "restaurantes/form.html", restaurante=None, contas=_contas_para_select()
+            "restaurantes/form.html", restaurante=None, contas=_contas_para_select(),
+            dono_padrao=u["id"] if u else None,
         )
 
     conta_id = request.form.get("conta_id", "").strip()

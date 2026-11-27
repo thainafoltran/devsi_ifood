@@ -128,8 +128,14 @@ def painel():
     for p in peds:
         et = FLUXO[p["tipo_entrega"]]
         p["proximo"] = et[et.index(p["status"]) + 1] if p["status"] in et[:-1] else None
-        
-    return render_template("pedidos/painel.html", pedidos=peds, rotulos=ROTULOS, page=page)
+
+    # O painel mostra os pedidos dos restaurantes em que esta conta é a DONA.
+    meus_restaurantes = run_query(
+        "SELECT id, nome FROM restaurantes WHERE conta_id=? ORDER BY nome",
+        (usuario_atual()["id"],), fetch=True)
+
+    return render_template("pedidos/painel.html", pedidos=peds, rotulos=ROTULOS, page=page,
+                           meus_restaurantes=meus_restaurantes)
 
 
 @pedidos_bp.route("/<int:pedido_id>/avancar", methods=["POST"])
