@@ -30,16 +30,23 @@ def _hash(conta_id, codigo):
     return hmac.new(chave, f"{conta_id}:{codigo}".encode(), hashlib.sha256).hexdigest()
 
 
-def _achar_conta(canal, ident):
-    if canal == "email":
-        return run_query("SELECT * FROM contas WHERE email=? AND ativo=1", (ident.strip().lower(),), fetchone=True)
+def _achar_contas(ident):
+    """Procura a conta pelo que a pessoa digitou: e-mail (tem '@') ou telefone.
+
+    O canal escolhido (e-mail/SMS/WhatsApp) só define ONDE o código será enviado,
+    não como a conta é encontrada. O telefone é comparado só pelos dígitos, então
+    '(11) 91234-5678', '11912345678' e '+55 11 91234-5678' são o mesmo número.
+    """
+    ident = ident.strip()
+    if "@" in ident:
+        return run_query("SELECT * FROM contas WHERE email=? AND ativo=1", (ident.lower(),), fetch=True)
     tel = normalizar_telefone(ident)
     if len(tel) not in (10, 11):
-        return None
-    return run_query(
-        """SELECT * FROM contas WHERE ativo=1 AND
-           REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone,'(',''),')',''),'-',''),' ',''),'+55','') = ?""",
-        (tel,), fetchone=True)
+        return []
+    candidatas = run_query(
+        "SELECT * FROM contas WHERE ativo=1 AND telefone IS NOT NULL AND telefone <> '' ORDER BY id",
+        fetch=True)
+    return [c for c in candidatas if normalizar_telefone(c["telefone"]) == tel]
 
 
 def _gerar_e_enviar(conta, canal, destino):
@@ -80,21 +87,33 @@ def entrar():
 
     canal = request.form.get("canal", "email")
     ident = request.form.get("identificador", "").strip()
-    
+
     if canal not in CANAIS or not ident:
         flash("Escolha o canal e informe seu e-mail ou telefone.", "danger")
         return render_template("auth/entrar.html", next=nxt), 400
-        
-    if canal == "email" and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", ident):
+
+    if "@" in ident and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", ident):
         flash("E-mail inválido.", "danger")
         return render_template("auth/entrar.html", next=nxt), 400
 
-    conta = _achar_conta(canal, ident)
-    if not conta:
+    contas = _achar_contas(ident)
+    if not contas:
         flash("Não encontramos uma conta ativa com esses dados. Cadastre-se primeiro.", "warning")
         return render_template("auth/entrar.html", next=nxt), 404
+    if len(contas) > 1:
+        flash("Mais de uma conta usa esse telefone. Entre informando o e-mail da conta.", "warning")
+        return render_template("auth/entrar.html", next=nxt), 409
+    conta = contas[0]
 
-    destino = conta["email"] if canal == "email" else normalizar_telefone(conta["telefone"])
+    if canal == "email":
+        destino = conta["email"]
+    else:
+        destino = normalizar_telefone(conta["telefone"])
+        if len(destino) not in (10, 11):
+            flash("Essa conta não tem telefone cadastrado para receber o código por SMS/WhatsApp. "
+                  "Escolha o canal E-mail ou cadastre um telefone na conta.", "warning")
+            return render_template("auth/entrar.html", next=nxt), 400
+
     codigo_id, erro = _gerar_e_enviar(conta, canal, destino)
     
     if erro:
