@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 from flask import Flask, redirect, url_for
 from dotenv import load_dotenv
 from app.db import init_db
@@ -49,6 +49,13 @@ def create_app():
     @app.template_filter("brl")
     def brl(v):
         return "R$ " + f"{float(v or 0):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    @app.template_filter("data_br")
+    def data_br(v):
+        try:
+            return datetime.strptime(v, "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %H:%M:%S")
+        except (TypeError, ValueError):
+            return v or ""
 
     @app.route("/")
     def index():

@@ -59,19 +59,6 @@ def _migrar(conn):
         if c not in cols:
             conn.execute(f"ALTER TABLE restaurantes ADD COLUMN {c} REAL")
 
-# Cria a tabela de Notas Fiscais automaticamente sem apagar dados existentes
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS notas_fiscais (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pedido_id INTEGER NOT NULL UNIQUE,
-            numero_nf TEXT NOT NULL UNIQUE,
-            chave_acesso TEXT NOT NULL,
-            valor_total REAL NOT NULL,
-            emitida_em TEXT NOT NULL,
-            FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
-        )
-    """)
-
 
 def init_db():
     schema_path = os.path.join(BASE_DIR, "banco_dados", "schema_sqlite.sql")
