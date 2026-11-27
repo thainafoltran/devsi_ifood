@@ -30,10 +30,9 @@ def exibir_nf(pedido_id):
 
     # 2. Busca os itens do pedido fechado
     itens = run_query(
-        """SELECT pi.quantidade, pi.preco_unitario, pr.nome AS produto_nome
-           FROM pedido_itens pi
-           JOIN produtos pr ON pr.id = pi.produto_id
-           WHERE pi.pedido_id = ?""",
+        """SELECT nome AS produto_nome, quantidade, preco_unitario
+           FROM pedido_itens
+           WHERE pedido_id = ?""",
         (pedido_id,),
         fetch=True,
     )
@@ -48,13 +47,13 @@ def exibir_nf(pedido_id):
     if not nf:
         numero_nf = f"{datetime.now().year}{pedido_id:06d}"
         chave_acesso = "".join([str(random.randint(0, 9)) for _ in range(44)])
-        emitida_em = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        valor_total = pedido.get("total") or sum(
-            i["quantidade"] * i["preco_unitario"] for i in itens
+        emitida_em = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        valor_total = pedido["total"] or round(
+            sum(i["quantidade"] * i["preco_unitario"] for i in itens), 2
         )
 
         run_query(
-            """INSERT INTO notas_fiscais (pedido_id, numero_nf, chave_acesso, valor_total, emitida_em)
+            """INSERT OR IGNORE INTO notas_fiscais (pedido_id, numero_nf, chave_acesso, valor_total, emitida_em)
                VALUES (?, ?, ?, ?, ?)""",
             (pedido_id, numero_nf, chave_acesso, valor_total, emitida_em),
             commit=True,
