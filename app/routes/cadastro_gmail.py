@@ -63,15 +63,17 @@ def callback():
             flash(f"Conta criada com sucesso via Google, {nome}!", "success")
         except IntegrityError:
             flash("Já existe uma conta local com esse e-mail.", "danger")
-            return redirect(url_for("contas.listar"))
+            return redirect(url_for("auth_codigo.entrar"))
 
-    # guarda o usuário logado na sessão
+    # guarda o usuário logado na sessão (mesmo formato do login por código)
+    session.pop("login_pendente", None)
+    session.permanent = True
     session["conta_id"] = conta_id
-    return redirect(url_for("contas.detalhe", conta_id=conta_id))
+    return redirect(url_for("explorar.restaurantes"))
 
 
 @auth_google_bp.route("/logout")
 def logout():
     session.pop("conta_id", None)
     flash("Você saiu da sua conta.", "info")
-    return redirect(url_for("contas.listar"))
+    return redirect(url_for("auth_codigo.entrar"))
