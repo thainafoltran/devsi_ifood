@@ -1,4 +1,7 @@
 -- =====================================================================
+-- ENTREGA FINAL
+-- =====================================================================
+-- =====================================================================
 -- DevSI - 2ª avaliação | Banco: SQLite 3 | Script de criação (idempotente)
 -- =====================================================================
 PRAGMA foreign_keys = ON;
@@ -63,7 +66,7 @@ CREATE TABLE IF NOT EXISTS restaurantes (
     latitude           REAL CHECK (latitude  BETWEEN -90  AND 90),
     longitude          REAL CHECK (longitude BETWEEN -180 AND 180),
     telefone           VARCHAR(20),
-    taxa_entrega       REAL NOT NULL DEFAULT 0 CHECK (taxa_entrega >= 0),
+    taxa_entrega       DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (taxa_entrega >= 0),
     tempo_entrega_min  INTEGER NOT NULL DEFAULT 30 CHECK (tempo_entrega_min > 0),
     tempo_entrega_max  INTEGER NOT NULL DEFAULT 45,
     avaliacao          REAL NOT NULL DEFAULT 0 CHECK (avaliacao BETWEEN 0 AND 5),
@@ -80,7 +83,7 @@ CREATE TABLE IF NOT EXISTS produtos (
     descricao       VARCHAR(500),
     categoria       VARCHAR(30)  NOT NULL
                     CHECK (categoria IN ('Lanche','Refeição','Bebida','Sobremesa','Entrada','Combo')),
-    preco           REAL NOT NULL CHECK (preco >= 0),
+    preco           DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     imagem_url      VARCHAR(500),
     disponivel      INTEGER NOT NULL DEFAULT 1 CHECK (disponivel IN (0,1)),
     data_criacao    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -125,9 +128,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
     endereco_id      INTEGER REFERENCES enderecos(id) ON DELETE SET NULL,
     endereco_texto   VARCHAR(300),                                -- cópia do endereço no momento do pedido
     tipo_entrega     VARCHAR(10) NOT NULL CHECK (tipo_entrega IN ('entrega','retirada')),
-    subtotal         REAL NOT NULL CHECK (subtotal >= 0),
-    taxa_frete       REAL NOT NULL DEFAULT 0 CHECK (taxa_frete >= 0),
-    total            REAL NOT NULL CHECK (total >= 0),
+    subtotal         DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
+    taxa_frete       DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (taxa_frete >= 0),
+    total            DECIMAL(10,2) NOT NULL CHECK (total >= 0),
     distancia_km     REAL,
     status           VARCHAR(25) NOT NULL DEFAULT 'recebido'
                      CHECK (status IN ('recebido','confirmado','em_preparo','saiu_para_entrega',
@@ -142,10 +145,10 @@ CREATE TABLE IF NOT EXISTS pedido_itens (
     pedido_id       INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
     produto_id      INTEGER REFERENCES produtos(id) ON DELETE SET NULL,
     nome            VARCHAR(120) NOT NULL,                        -- cópia (histórico)
-    preco_unitario  REAL NOT NULL CHECK (preco_unitario >= 0),
+    preco_unitario  DECIMAL(10,2) NOT NULL CHECK (preco_unitario >= 0),
     quantidade      INTEGER NOT NULL CHECK (quantidade > 0),
     observacao      VARCHAR(140),
-    total_item      REAL NOT NULL
+    total_item      DECIMAL(10,2) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS pagamentos (
@@ -153,11 +156,11 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     pedido_id       INTEGER NOT NULL UNIQUE REFERENCES pedidos(id) ON DELETE CASCADE,
     forma           VARCHAR(15) NOT NULL
                     CHECK (forma IN ('pix','cartao_credito','cartao_debito','dinheiro')),
-    valor           REAL NOT NULL CHECK (valor >= 0),
+    valor           DECIMAL(10,2) NOT NULL CHECK (valor >= 0),
     status          VARCHAR(10) NOT NULL CHECK (status IN ('pendente','aprovado','recusado','estornado')),
     bandeira        VARCHAR(20),
     cartao_final    CHAR(4),                                      -- só os 4 últimos dígitos
-    troco_para      REAL,
+    troco_para      DECIMAL(10,2),
     transacao_id    VARCHAR(40),
     criado_em       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -172,14 +175,14 @@ CREATE TABLE IF NOT EXISTS pedido_status_historico (
 -- ---------- NOTAS FISCAIS ----------
 
 CREATE TABLE IF NOT EXISTS notas_fiscais (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pedido_id INTEGER NOT NULL UNIQUE,
-    numero_nf TEXT NOT NULL UNIQUE,
-    chave_acesso TEXT NOT NULL,
-    valor_total REAL NOT NULL,
-    emitida_em TEXT NOT NULL,
-    FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id     INTEGER NOT NULL UNIQUE REFERENCES pedidos(id) ON DELETE CASCADE,
+    numero_nf     VARCHAR(20) NOT NULL UNIQUE,
+    chave_acesso  VARCHAR(44) NOT NULL,
+    valor_total   DECIMAL(10,2) NOT NULL,
+    emitida_em    DATETIME NOT NULL
 );
+
 
 
 -- ENTREGA 1 

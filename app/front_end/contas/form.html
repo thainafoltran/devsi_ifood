@@ -1,6 +1,6 @@
 {% extends "base2.html" %}
-{% block title %}{{ 'Editar conta' if conta and conta.id else 'Nova conta' }}{% endblock %}
-{% block content %}
+{% block titulo %}{{ 'Editar conta' if conta and conta.id else 'Nova conta' }}{% endblock %}
+{% block conteudo %}
   <h2 class="mb-4">{{ 'Editar conta' if conta and conta.id else 'Nova conta' }}</h2>
 
   <form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:480px;">
