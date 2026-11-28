@@ -6,7 +6,7 @@
 <style>
 :root{--c:#ea1d2c;--bg:#f7f7f7;--tx:#3e3e3e;--mut:#717171;--bd:#e6e6e6}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--tx)}
-nav{background:#fff;border-bottom:1px solid var(--bd);padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;position:sticky;top:0}
+nav{background:#fff;border-bottom:1px solid var(--bd);padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
 nav a{color:var(--tx);text-decoration:none;font-weight:500}nav a:hover{color:var(--c)}nav .brand{color:var(--c);font-weight:800;font-size:1.2rem}
 nav .sp{flex:1}main{max-width:1000px;margin:1.2rem auto;padding:0 1rem}
 .card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:1rem;margin-bottom:.8rem}
@@ -23,6 +23,16 @@ table{width:100%;border-collapse:collapse}td,th{padding:.45rem;border-bottom:1px
 .steps{list-style:none;padding:0}.steps li{padding:.5rem .8rem;border-left:4px solid #ddd;margin-bottom:.3rem;color:var(--mut)}
 .steps li.ok{border-color:#2e9e4f;color:var(--tx)}.steps li.now{border-color:var(--c);color:var(--c);font-weight:700}
 .codigo{font-size:1.8rem;letter-spacing:.6rem;text-align:center;width:14rem}
+.subnav{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.subnav a{padding:.3rem .8rem;border:1px solid var(--bd);border-radius:20px;background:#fff;font-size:.9rem}
+.subnav a.on{background:var(--c);border-color:var(--c);color:#fff}
+.tag.ok{background:#e6f6ea}.tag.off{background:#fde8e8}
+.full{width:100%}.form{max-width:600px}.scroll-x{overflow-x:auto}
+.btn.danger{background:#b00020}
+.dl p{margin:.35rem 0}
+.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.8rem}
+.hub .card{margin:0}.hub h3{margin:.2rem 0}
+.pill{font-size:.8rem;background:#fff4d6;border-radius:20px;padding:.1rem .6rem}
 </style></head>
 <body>
 <nav>
@@ -30,11 +40,11 @@ table{width:100%;border-collapse:collapse}td,th{padding:.45rem;border-bottom:1px
   <a href="{{ url_for('explorar.restaurantes') }}">Restaurantes</a>
   <a href="{{ url_for('explorar.produtos') }}">Produtos</a>
   {% if usuario %}
-    <a href="{{ url_for('explorar.restaurantes', favoritos=1) }}">Favoritos</a>
+    <a href="{{ url_for('explorar.favoritos') }}">♥ Favoritos</a>
     <a href="{{ url_for('pedidos.listar') }}">Pedidos</a>
     <a href="{{ url_for('enderecos.listar') }}">Meus locais</a>
     <span style="color:#ddd">|</span>
-    <a href="{{ url_for('restaurantes.listar') }}">Gestão (CRUD)</a>
+    <a href="{{ url_for('gestao.index') }}">Gestão</a>
     <a href="{{ url_for('pedidos.painel') }}">Painel Loja</a>
   {% endif %}
   <a href="{{ url_for('api_restaurantes.tela_mobile') }}" style="color:var(--c);font-weight:700">📱 App Mobile</a>
